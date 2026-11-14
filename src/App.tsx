@@ -5,18 +5,23 @@ import { Stickers } from './screens/Stickers'
 import { Parents } from './screens/Parents'
 import { Welcome } from './screens/Welcome'
 import { useStore } from './lib/store'
-import { setSpeechEnabled } from './lib/speech'
+import { setPreferredVoice, setSpeechEnabled } from './lib/speech'
 
 type Screen = { name: 'home' } | { name: 'game'; id: string } | { name: 'stickers' } | { name: 'parents' } | { name: 'welcome' }
 
 export default function App() {
-  const { childName, sound, setParentUnlocked } = useStore()
+  const { childName, sound, voiceDe, voiceIt, setParentUnlocked } = useStore()
   const [screen, setScreen] = useState<Screen>(() => (childName ? { name: 'home' } : { name: 'welcome' }))
 
   useEffect(() => {
     setSpeechEnabled(sound)
     setParentUnlocked(false)
   }, [sound, setParentUnlocked])
+
+  useEffect(() => {
+    setPreferredVoice('de', voiceDe)
+    setPreferredVoice('it', voiceIt)
+  }, [voiceDe, voiceIt])
 
   // Warm up speech synthesis on first interaction (iOS requires a user gesture)
   useEffect(() => {

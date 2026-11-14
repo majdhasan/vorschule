@@ -213,6 +213,9 @@ section h2 { font-size: 21px; margin-bottom: 10px; display: flex; align-items: c
 .ptable .good { color: var(--good); font-weight: 700; }
 .ptable .mid { color: #e09f00; font-weight: 700; }
 .ptable .bad { color: var(--bad); font-weight: 700; }
+.hint { margin-top: 10px; font-size: 15px; }
+.hint summary { cursor: pointer; font-weight: 600; color: var(--accent); }
+.prow select.input { max-width: 46vw; font-size: 15px; }
 .tips { padding-left: 18px; font-size: 15px; line-height: 1.5; margin: 0; }
 
 /* ---------- animations ---------- */

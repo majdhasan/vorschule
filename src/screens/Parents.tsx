@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { GAMES } from '../games'
 import { statsFor, useStore } from '../lib/store'
-import { setSpeechEnabled } from '../lib/speech'
+import { setPreferredVoice, setSpeechEnabled, speak, voicesFor, type VoiceInfo } from '../lib/speech'
 
 export function Parents({ onHome }: { onHome: () => void }) {
   const s = useStore()
@@ -10,6 +10,13 @@ export function Parents({ onHome }: { onHome: () => void }) {
   const [input, setInput] = useState('')
   const [name, setName] = useState(s.childName)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [voices, setVoices] = useState<{ de: VoiceInfo[]; it: VoiceInfo[] }>({ de: [], it: [] })
+  useEffect(() => {
+    const load = () => setVoices({ de: voicesFor('de'), it: voicesFor('it') })
+    load()
+    speechSynthesis?.addEventListener?.('voiceschanged', load)
+    return () => speechSynthesis?.removeEventListener?.('voiceschanged', load)
+  }, [])
 
   if (!s.parentUnlocked) {
     return (
@@ -66,6 +73,47 @@ export function Parents({ onHome }: { onHome: () => void }) {
             <span>Sprachausgabe</span>
             <input type="checkbox" checked={s.sound} onChange={(e) => { s.setSound(e.target.checked); setSpeechEnabled(e.target.checked) }} />
           </label>
+        </section>
+
+        <section className="pcard">
+          <h3>Stimmen</h3>
+          <p className="muted">
+            Die Sprachqualität hängt von den Stimmen auf diesem Gerät ab. ★★★ = sehr gut, ★ = einfache Standardstimme.
+            Ohne Auswahl nimmt Berli automatisch die beste.
+          </p>
+          {(['de', 'it'] as const).map((lang) => {
+            const list = voices[lang]
+            const current = lang === 'de' ? s.voiceDe : s.voiceIt
+            const sample = lang === 'de' ? 'Hallo! Ich bin Berli, der Berliner Bär. Mit welchem Buchstaben beginnt Elefant?' : "Ciao! Sono Berli, l'orso di Berlino. Quante sillabe ha banana?"
+            return (
+              <div className="prow" key={lang}>
+                <span>{lang === 'de' ? '🇩🇪 Deutsch' : '🇮🇹 Italienisch'}</span>
+                <span className="prow-right">
+                  <select
+                    className="input"
+                    value={current}
+                    onChange={(e) => { s.setVoice(lang, e.target.value); setPreferredVoice(lang, e.target.value) }}
+                  >
+                    <option value="">Automatisch{list[0] ? ` (${list[0].name})` : ''}</option>
+                    {list.map((v) => (
+                      <option key={v.name} value={v.name}>{v.label}</option>
+                    ))}
+                  </select>
+                  <button className="btn small" onClick={() => speak(sample, lang)}>▶ Test</button>
+                </span>
+              </div>
+            )
+          })}
+          {voices.de.length === 0 && <p className="muted">Keine deutsche Stimme gefunden – siehe Hinweis unten.</p>}
+          <details className="hint">
+            <summary>Bessere Stimmen installieren</summary>
+            <ul className="tips">
+              <li><b>iPad / iPhone:</b> Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch → „Anna (Premium)“ oder „Petra (Premium)“ laden; Italienisch → „Alice (Premium)“ oder „Federica (Premium)“. Danach Safari neu starten.</li>
+              <li><b>Mac:</b> Systemeinstellungen → Bedienungshilfen → Gesprochene Inhalte → Systemstimme → „Stimmen verwalten“ → dieselben Premium-Stimmen laden.</li>
+              <li><b>Chrome am Mac/PC:</b> online stehen „Google Deutsch“ und „Google italiano“ bereit – deutlich besser als die Standardstimmen, werden automatisch bevorzugt.</li>
+              <li><b>Android:</b> Einstellungen → System → Sprachen → Text-zu-Sprache → Google-Sprachausgabe → Stimmen für Deutsch und Italienisch installieren.</li>
+            </ul>
+          </details>
         </section>
 
         <section className="pcard">

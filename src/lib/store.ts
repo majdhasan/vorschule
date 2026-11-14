@@ -16,6 +16,8 @@ export type State = {
   childName: string
   bilingual: boolean
   sound: boolean
+  voiceDe: string
+  voiceIt: string
   parentUnlocked: boolean
   totalStars: number
   games: Record<string, GameStats>
@@ -26,6 +28,7 @@ export type State = {
   setName: (n: string) => void
   setBilingual: (b: boolean) => void
   setSound: (b: boolean) => void
+  setVoice: (lang: 'de' | 'it', name: string) => void
   setParentUnlocked: (b: boolean) => void
   recordGame: (id: string, correct: number, total: number, stars: number) => { newSticker: boolean; levelUp: boolean }
   touchDay: () => void
@@ -40,6 +43,8 @@ const initial = {
   childName: '',
   bilingual: true,
   sound: true,
+  voiceDe: '',
+  voiceIt: '',
   parentUnlocked: false,
   totalStars: 0,
   games: {},
@@ -56,6 +61,7 @@ export const useStore = create<State>()(
       setName: (childName) => set({ childName }),
       setBilingual: (bilingual) => set({ bilingual }),
       setSound: (sound) => set({ sound }),
+      setVoice: (lang, name) => set(lang === 'de' ? { voiceDe: name } : { voiceIt: name }),
       setParentUnlocked: (parentUnlocked) => set({ parentUnlocked }),
       touchDay: () => {
         const today = todayKey()

@@ -3,30 +3,68 @@ export type Lang = 'de' | 'it'
 
 const LANG_TAG: Record<Lang, string> = { de: 'de-DE', it: 'it-IT' }
 
-let voicesCache: SpeechSynthesisVoice[] = []
-function loadVoices() {
-  if (typeof speechSynthesis === 'undefined') return
-  voicesCache = speechSynthesis.getVoices()
-  if (voicesCache.length === 0) {
-    speechSynthesis.onvoiceschanged = () => {
-      voicesCache = speechSynthesis.getVoices()
-    }
-  }
+// Novelty / effect voices shipped with macOS – never use these.
+const NOVELTY = /^(Eddy|Flo|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Good News|Jester|Junior|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Albert|Fred|Kathy|Ralph)\b/i
+
+export type VoiceInfo = { name: string; lang: string; quality: number; label: string; remote: boolean }
+
+/** Higher = better. */
+export function rankVoice(v: SpeechSynthesisVoice): number {
+  const n = v.name
+  if (NOVELTY.test(n)) return 0
+  if (/premium/i.test(n)) return 100
+  if (/enhanced|erweitert|migliorata/i.test(n)) return 90
+  if (/natural|neural|online/i.test(n)) return 85 // Microsoft Edge natural voices
+  if (/^Google/i.test(n)) return 80 // Chrome online voices – far better than compact Anna/Alice
+  if (/siri/i.test(n)) return 75
+  return 40 // plain local voice (e.g. compact Anna / Alice)
 }
-loadVoices()
+
+function allVoices(): SpeechSynthesisVoice[] {
+  if (typeof speechSynthesis === 'undefined') return []
+  return speechSynthesis.getVoices()
+}
+// Trigger async voice loading early (Chrome loads lazily)
+if (typeof speechSynthesis !== 'undefined') {
+  allVoices()
+  speechSynthesis.addEventListener?.('voiceschanged', () => allVoices())
+}
+
+export function voicesFor(lang: Lang): VoiceInfo[] {
+  const prefix = LANG_TAG[lang].slice(0, 2)
+  return allVoices()
+    .filter((v) => v.lang.replace('_', '-').toLowerCase().startsWith(prefix))
+    .map((v) => {
+      const q = rankVoice(v)
+      const tag = q >= 90 ? '★★★' : q >= 75 ? '★★' : q > 0 ? '★' : '✗'
+      return { name: v.name, lang: v.lang, quality: q, label: `${tag} ${v.name}${v.localService ? '' : ' (online)'}`, remote: !v.localService }
+    })
+    .sort((a, b) => b.quality - a.quality || a.name.localeCompare(b.name))
+}
+
+const preferred: Record<Lang, string> = { de: '', it: '' }
+export function setPreferredVoice(lang: Lang, name: string) {
+  preferred[lang] = name
+}
 
 function pickVoice(lang: Lang): SpeechSynthesisVoice | undefined {
   const tag = LANG_TAG[lang]
   const prefix = tag.slice(0, 2)
-  const candidates = voicesCache.filter((v) => v.lang.replace('_', '-').toLowerCase().startsWith(prefix))
+  const candidates = allVoices().filter((v) => v.lang.replace('_', '-').toLowerCase().startsWith(prefix))
   if (candidates.length === 0) return undefined
-  // Prefer high quality / known good voices
-  const preferred = ['Anna', 'Petra', 'Helena', 'Alice', 'Federica', 'Google', 'Premium', 'Enhanced']
-  for (const p of preferred) {
-    const v = candidates.find((c) => c.name.includes(p))
-    if (v) return v
+  if (preferred[lang]) {
+    const chosen = candidates.find((v) => v.name === preferred[lang])
+    if (chosen) return chosen
   }
-  return candidates.find((c) => c.lang.replace('_', '-') === tag) ?? candidates[0]
+  const online = typeof navigator !== 'undefined' ? navigator.onLine : true
+  const usable = candidates.filter((v) => rankVoice(v) > 0 && (online || v.localService))
+  const pool = usable.length ? usable : candidates
+  return pool.sort((a, b) => {
+    const d = rankVoice(b) - rankVoice(a)
+    if (d !== 0) return d
+    // exact region match wins, then stable by name
+    return Number(b.lang.replace('_', '-') === tag) - Number(a.lang.replace('_', '-') === tag)
+  })[0]
 }
 
 let enabled = true
@@ -48,12 +86,19 @@ export function speak(text: string, lang: Lang = 'de', opts: { rate?: number; in
     const v = pickVoice(lang)
     if (v) u.voice = v
     u.rate = opts.rate ?? 0.9
-    u.pitch = 1.05
-    u.onend = () => resolve()
-    u.onerror = () => resolve()
-    speechSynthesis.speak(u)
+    u.pitch = 1.0
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      resolve()
+    }
+    u.onend = finish
+    u.onerror = finish
+    // Chrome drops utterances queued synchronously after cancel(); defer a tick.
+    setTimeout(() => speechSynthesis.speak(u), 0)
     // Safety: resolve even if onend never fires (Safari quirk)
-    setTimeout(resolve, Math.max(1500, text.length * 120))
+    setTimeout(finish, Math.max(2000, text.length * 130))
   })
 }
 
