@@ -64,3 +64,14 @@ src/
 
 Neues Spiel hinzufügen: Komponente mit `GameProps` schreiben, die `ChoiceGame` mit einer Liste von `Round`s rendert,
 und in `src/games/index.ts` eintragen.
+
+## Deployment
+
+Live unter **https://meramie.cc/vorschule/** (Hetzner, nginx-Gateway des meracoach-Stacks, Verzeichnis `html/meramie/vorschule/`).
+
+```bash
+DEPLOY_SSH_OPTS="-o IdentityAgent=none -o UseKeychain=yes -o IdentitiesOnly=yes" scripts/deploy.sh
+```
+
+Baut mit `VITE_BASE=/vorschule/`, lädt `dist/` per tar über ssh hoch und tauscht das Verzeichnis atomar aus. Kein Neustart nötig.
+Der nginx-`location /vorschule/`-Block liegt in `nginx/gateway.conf` des meracoach-Repos auf dem Server.

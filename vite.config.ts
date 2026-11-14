@@ -2,13 +2,19 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 
+// Deploy under a sub-path with e.g. VITE_BASE=/vorschule/ npm run build
+const base = process.env.VITE_BASE ?? '/'
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg', 'icon-192.png', 'icon-512.png'],
       manifest: {
+        start_url: base,
+        scope: base,
         name: 'Berli – Vorschule',
         short_name: 'Berli',
         description: 'Spielerisch fit für die Schule – Deutsch & Italienisch',
