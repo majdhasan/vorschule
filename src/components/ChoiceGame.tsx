@@ -28,13 +28,18 @@ export type GameProps = {
 type Props = { rounds: Round[]; bilingual: boolean; onFinish: GameProps['onFinish']; onClose: () => void }
 
 export const MAX_HEARTS = 3
+/** How many wrong picks on one question before the answer is revealed. */
+const MAX_TRIES = 2
+
+type Checked = null | 'correct' | 'wrong' | 'reveal'
 
 export function ChoiceGame({ rounds, bilingual, onFinish, onClose }: Props) {
-  // queue of round indices; a missed round is appended once so it comes back
+  // queue of round indices; a round whose answer had to be revealed is appended once so it comes back
   const [queue, setQueue] = useState<number[]>(() => rounds.map((_, i) => i))
   const [pos, setPos] = useState(0)
   const [selected, setSelected] = useState<string | null>(null)
-  const [checked, setChecked] = useState<null | 'correct' | 'wrong'>(null)
+  const [checked, setChecked] = useState<Checked>(null)
+  const [wrongKeys, setWrongKeys] = useState<string[]>([])
   const [hearts, setHearts] = useState(MAX_HEARTS)
   const [firstTryCorrect, setFirstTryCorrect] = useState(0)
   const [solvedCount, setSolvedCount] = useState(0)
@@ -48,13 +53,14 @@ export function ChoiceGame({ rounds, bilingual, onFinish, onClose }: Props) {
   useEffect(() => {
     setSelected(null)
     setChecked(null)
+    setWrongKeys([])
     const t = setTimeout(sayPrompt, 350)
     return () => clearTimeout(t)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pos])
 
   const pick = (o: Option) => {
-    if (checked) return
+    if (checked || wrongKeys.includes(o.key)) return
     setSelected(o.key)
     if (o.sayDe) speakBoth(o.sayDe, o.sayIt, bilingual)
   }
@@ -65,23 +71,40 @@ export function ChoiceGame({ rounds, bilingual, onFinish, onClose }: Props) {
     if (selected === round.answer) {
       setChecked('correct')
       setSolvedCount((c) => c + 1)
-      if (!isRetry) setFirstTryCorrect((c) => c + 1)
+      if (!isRetry && wrongKeys.length === 0) setFirstTryCorrect((c) => c + 1)
       confetti({ particleCount: 50, spread: 60, origin: { y: 0.8 }, scalar: 1 })
       const p = praise(bilingual)
       await p.say()
       if (round.factDe) await speak(round.factDe, 'de')
-    } else {
+      return
+    }
+    const wrongNow = [...wrongKeys, selected]
+    setWrongKeys(wrongNow)
+    // one heart per question, not per attempt
+    if (wrongKeys.length === 0) setHearts((h) => Math.max(0, h - 1))
+    const remaining = round.options.length - wrongNow.length
+    const giveUp = wrongNow.length >= MAX_TRIES || remaining <= 1
+    if (!giveUp) {
       setChecked('wrong')
-      setHearts((h) => Math.max(0, h - 1))
-      if (!missed.current.has(roundIdx)) {
-        missed.current.add(roundIdx)
-        setQueue((q) => [...q, roundIdx])
-      }
       const r = retry()
       await r.say()
-      const correct = round.options.find((o) => o.key === round.answer)
-      if (correct?.sayDe) await speakBoth(`Richtig wäre: ${correct.sayDe}`, correct.sayIt, bilingual)
+      return
     }
+    setChecked('reveal')
+    if (!missed.current.has(roundIdx)) {
+      missed.current.add(roundIdx)
+      setQueue((q) => [...q, roundIdx])
+    }
+    const correct = round.options.find((o) => o.key === round.answer)
+    if (correct?.sayDe) await speakBoth(`Richtig wäre: ${correct.sayDe}`, correct.sayIt, bilingual)
+    else await speak('Schau, das hier ist richtig.', 'de')
+  }
+
+  const tryAgain = () => {
+    stopSpeech()
+    setSelected(null)
+    setChecked(null)
+    sayPrompt()
   }
 
   const next = () => {
@@ -95,19 +118,33 @@ export function ChoiceGame({ rounds, bilingual, onFinish, onClose }: Props) {
 
   const cols = round.columns ?? (round.options.length <= 3 ? round.options.length : 2)
   const correctOpt = useMemo(() => round.options.find((o) => o.key === round.answer), [round])
+  const revealed = checked === 'correct' || checked === 'reveal'
 
   const footer =
     checked === null ? (
       <button className="btn green block" disabled={!selected} onClick={check}>
         Überprüfen
       </button>
+    ) : checked === 'wrong' ? (
+      <div className="feedback">
+        <div className="feedback-row">
+          <span className="feedback-icon">✗</span>
+          <div className="feedback-text">
+            <div className="feedback-title">Nicht ganz!</div>
+            <div className="feedback-sub">{bilingual ? 'Versuch es nochmal! · Riprova!' : 'Versuch es nochmal!'}</div>
+          </div>
+        </div>
+        <button className="btn block red" onClick={tryAgain}>
+          Nochmal versuchen
+        </button>
+      </div>
     ) : (
       <div className="feedback">
         <div className="feedback-row">
           <span className="feedback-icon">{checked === 'correct' ? '✓' : '✗'}</span>
           <div className="feedback-text">
             <div className="feedback-title">{checked === 'correct' ? (bilingual ? 'Richtig! · Giusto!' : 'Richtig!') : 'Nicht ganz!'}</div>
-            {checked === 'wrong' && correctOpt && (
+            {checked === 'reveal' && correctOpt && (
               <div className="feedback-sub">
                 Richtig wäre: <b>{correctOpt.sayDe ?? ''}</b>
               </div>
@@ -122,10 +159,10 @@ export function ChoiceGame({ rounds, bilingual, onFinish, onClose }: Props) {
     )
 
   return (
-    <LessonShell progress={solvedCount / rounds.length} hearts={hearts} onClose={onClose} footer={footer} footerTone={checked ?? 'neutral'}>
+    <LessonShell progress={solvedCount / rounds.length} hearts={hearts} onClose={onClose} footer={footer} footerTone={checked === 'reveal' ? 'wrong' : (checked ?? 'neutral')}>
       <div className="q">
         <div className="q-head">
-          <Mascot mood={checked === 'correct' ? 'happy' : checked === 'wrong' ? 'think' : 'normal'} size={56} />
+          <Mascot mood={checked === 'correct' ? 'happy' : checked ? 'think' : 'normal'} size={56} />
           <button className="bubble" onClick={sayPrompt} aria-label="Nochmal anhören">
             <div className="bubble-de">{round.promptDe}</div>
             {bilingual && round.promptIt && <div className="bubble-it">{round.promptIt}</div>}
@@ -136,14 +173,15 @@ export function ChoiceGame({ rounds, bilingual, onFinish, onClose }: Props) {
         <div className="options" style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}>
           {round.options.map((o) => {
             const isSel = selected === o.key
+            const wasWrong = wrongKeys.includes(o.key)
             const cls =
               'opt' +
               (o.wide ? ' wide' : '') +
               (checked === null && isSel ? ' selected' : '') +
-              (checked && o.key === round.answer ? ' right' : '') +
-              (checked === 'wrong' && isSel ? ' wrong' : '')
+              (revealed && o.key === round.answer ? ' right' : '') +
+              (wasWrong ? ' wrong' : '')
             return (
-              <button key={o.key} className={cls} onClick={() => pick(o)} disabled={checked !== null}>
+              <button key={o.key} className={cls} onClick={() => pick(o)} disabled={checked !== null || wasWrong}>
                 {o.node}
               </button>
             )
