@@ -18,9 +18,18 @@ Auf dem Tablet: Seite öffnen → „Zum Home-Bildschirm hinzufügen“. Danach 
 ## Was drin ist
 
 Berli, der Berliner Bär, spricht alle Aufgaben vor (Browser-Sprachausgabe, Deutsch und optional Italienisch),
-sodass das Kind noch nicht lesen können muss. Jede Runde hat 6 Aufgaben, am Ende gibt es 1–3 Sterne.
-Alle 8 Sterne wird ein Sticker fürs Album freigeschaltet. Die Startseite schlägt jeden Tag 3 Spiele vor
-(bevorzugt die, die selten gespielt wurden oder noch schwerfallen).
+sodass das Kind noch nicht lesen können muss.
+
+UI/UX nach Duolingo-Vorbild:
+
+- **Lernpfad** mit 8 Einheiten und 46 Lektionen (`src/data/path.ts`). Lektionen schalten sich nacheinander frei,
+  jede Einheit endet mit einer Schatztruhe (XP + Sticker). Die aktuelle Lektion pulsiert mit „START“-Sprechblase.
+- **Lektion**: Antwort antippen → „Überprüfen“ → grüne/rote Rückmeldung unten → „Weiter“. Fortschrittsbalken oben,
+  3 Herzen, falsch beantwortete Aufgaben kommen am Ende noch einmal. 6 Aufgaben pro Lektion.
+- **XP** statt Sterne: 10 XP pro neuer Lektion, 5 fürs Wiederholen, 8 fürs freie Üben, +5 bei fehlerfreier Runde.
+  Alle 80 XP ein Sticker. Am Ende Statistik-Karten (XP, Genauigkeit, Zeit).
+- **Tagesaufgaben**: 30 XP, 3 Lektionen, 1 perfekte Lektion → Bonus-Sticker. Tages-Serie 🔥.
+- **Üben**-Tab: jedes Spiel in jeder Stufe frei wählbar.
 
 | Bereich | Spiel | Trainiert |
 |---|---|---|

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Home } from './screens/Home'
+import { Path } from './screens/Path'
+import { Practice } from './screens/Practice'
 import { GameScreen } from './screens/GameScreen'
 import { Stickers } from './screens/Stickers'
 import { Parents } from './screens/Parents'
@@ -7,11 +8,21 @@ import { Welcome } from './screens/Welcome'
 import { useStore } from './lib/store'
 import { setPreferredVoice, setSpeechEnabled } from './lib/speech'
 
-type Screen = { name: 'home' } | { name: 'game'; id: string } | { name: 'stickers' } | { name: 'parents' } | { name: 'welcome' }
+type Tab = 'path' | 'practice' | 'stickers' | 'parents'
+type Screen = { name: 'tabs' } | { name: 'lesson'; nodeId?: string; gameId: string; level: number } | { name: 'welcome' }
+
+const TABS: { id: Tab; emoji: string; label: string }[] = [
+  { id: 'path', emoji: '🏠', label: 'Lernen' },
+  { id: 'practice', emoji: '💪', label: 'Üben' },
+  { id: 'stickers', emoji: '🏆', label: 'Sticker' },
+  { id: 'parents', emoji: '👨‍👩‍👦', label: 'Eltern' },
+]
 
 export default function App() {
   const { childName, sound, voiceDe, voiceIt, setParentUnlocked } = useStore()
-  const [screen, setScreen] = useState<Screen>(() => (childName ? { name: 'home' } : { name: 'welcome' }))
+  const [screen, setScreen] = useState<Screen>(() => (childName ? { name: 'tabs' } : { name: 'welcome' }))
+  const [tab, setTab] = useState<Tab>('path')
+  const [lessonKey, setLessonKey] = useState(0)
 
   useEffect(() => {
     setSpeechEnabled(sound)
@@ -27,8 +38,7 @@ export default function App() {
   useEffect(() => {
     const warm = () => {
       try {
-        const u = new SpeechSynthesisUtterance('')
-        speechSynthesis.speak(u)
+        speechSynthesis.speak(new SpeechSynthesisUtterance(''))
       } catch { /* ignore */ }
       window.removeEventListener('pointerdown', warm)
     }
@@ -36,17 +46,34 @@ export default function App() {
     return () => window.removeEventListener('pointerdown', warm)
   }, [])
 
-  const home = () => setScreen({ name: 'home' })
-  switch (screen.name) {
-    case 'welcome':
-      return <Welcome onDone={home} />
-    case 'game':
-      return <GameScreen key={screen.id} id={screen.id} onHome={home} />
-    case 'stickers':
-      return <Stickers onHome={home} />
-    case 'parents':
-      return <Parents onHome={home} />
-    default:
-      return <Home onPlay={(id) => setScreen({ name: 'game', id })} onStickers={() => setScreen({ name: 'stickers' })} onParents={() => setScreen({ name: 'parents' })} />
+  const startLesson = (gameId: string, level: number, nodeId?: string) => {
+    setLessonKey((k) => k + 1)
+    setScreen({ name: 'lesson', gameId, level, nodeId })
   }
+  const home = () => {
+    setScreen({ name: 'tabs' })
+    window.scrollTo(0, 0)
+  }
+
+  if (screen.name === 'welcome') return <Welcome onDone={home} />
+  if (screen.name === 'lesson') return <GameScreen key={lessonKey} nodeId={screen.nodeId} gameId={screen.gameId} level={screen.level} onHome={home} />
+
+  return (
+    <div className="app">
+      <div className="tab-content">
+        {tab === 'path' && <Path onLesson={(nodeId, gameId, level) => startLesson(gameId, level, nodeId)} />}
+        {tab === 'practice' && <Practice onLesson={(gameId, level) => startLesson(gameId, level)} />}
+        {tab === 'stickers' && <Stickers />}
+        {tab === 'parents' && <Parents />}
+      </div>
+      <nav className="tabbar">
+        {TABS.map((t) => (
+          <button key={t.id} className={'tab' + (tab === t.id ? ' on' : '')} onClick={() => { setTab(t.id); window.scrollTo(0, 0) }} aria-label={t.label}>
+            <span className="tab-emoji">{t.emoji}</span>
+            <span className="tab-label">{t.label}</span>
+          </button>
+        ))}
+      </nav>
+    </div>
+  )
 }

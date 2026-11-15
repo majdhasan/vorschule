@@ -19,7 +19,7 @@ export function Welcome({ onDone }: { onDone: () => void }) {
       <p className="it">Ciao! Sono Berli, l'orso di Berlino.</p>
       <label className="welcome-label">Wie heißt du?</label>
       <input className="input big-input" value={name} onChange={(e) => setLocal(e.target.value)} placeholder="Dein Name" autoFocus onKeyDown={(e) => e.key === 'Enter' && go()} />
-      <button className="btn big" onClick={go}>🚀 Los geht's!</button>
+      <button className="btn green big" onClick={go}>Los geht's!</button>
     </div>
   )
 }

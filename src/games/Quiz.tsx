@@ -27,12 +27,12 @@ function toRounds(qs: Quiz[]): Round[] {
   })
 }
 
-export function Berlin({ bilingual, onFinish }: GameProps) {
+export function Berlin({ bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo(() => toRounds(BERLIN), [])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }
 
-export function Schulweg({ bilingual, onFinish }: GameProps) {
+export function Schulweg({ bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo(() => toRounds(SCHULWEG), [])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

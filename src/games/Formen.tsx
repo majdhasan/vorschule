@@ -22,7 +22,7 @@ function itAdj(colorIt: string, fem: boolean) {
   return colorIt
 }
 
-export default function Formen({ level, bilingual, onFinish }: GameProps) {
+export default function Formen({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     return Array.from({ length: 6 }, (_, ri) => {
       const mode = level === 1 ? 'shape' : level === 2 ? 'both' : ri % 2 === 0 ? 'both' : 'color'
@@ -71,5 +71,5 @@ export default function Formen({ level, bilingual, onFinish }: GameProps) {
       }
     })
   }, [level])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

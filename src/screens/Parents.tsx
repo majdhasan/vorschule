@@ -3,7 +3,7 @@ import { GAMES } from '../games'
 import { statsFor, useStore } from '../lib/store'
 import { setPreferredVoice, setSpeechEnabled, speak, voicesFor, type VoiceInfo } from '../lib/speech'
 
-export function Parents({ onHome }: { onHome: () => void }) {
+export function Parents() {
   const s = useStore()
   const [a] = useState(() => 3 + Math.floor(Math.random() * 6))
   const [b] = useState(() => 4 + Math.floor(Math.random() * 6))
@@ -20,12 +20,8 @@ export function Parents({ onHome }: { onHome: () => void }) {
 
   if (!s.parentUnlocked) {
     return (
-      <div className="screen">
-        <div className="topbar" style={{ background: '#6c757d' }}>
-          <button className="back" onClick={onHome} aria-label="Zurück">←</button>
-          <div className="topbar-title">👨‍👩‍👦 Elternbereich</div>
-          <div />
-        </div>
+      <div className="practice">
+        <header className="page-head"><h1>👨‍👩‍👦 Elternbereich</h1></header>
         <div className="gate">
           <p>Nur für Erwachsene. Wie viel ist</p>
           <div className="gate-q">{a} × {b} = ?</div>
@@ -37,7 +33,7 @@ export function Parents({ onHome }: { onHome: () => void }) {
             onKeyDown={(e) => e.key === 'Enter' && Number(input) === a * b && s.setParentUnlocked(true)}
             autoFocus
           />
-          <button className="btn" onClick={() => Number(input) === a * b && s.setParentUnlocked(true)}>Öffnen</button>
+          <button className="btn green" onClick={() => Number(input) === a * b && s.setParentUnlocked(true)}>Öffnen</button>
         </div>
       </div>
     )
@@ -49,12 +45,11 @@ export function Parents({ onHome }: { onHome: () => void }) {
   }, { c: 0, t: 0, p: 0 })
 
   return (
-    <div className="screen">
-      <div className="topbar" style={{ background: '#6c757d' }}>
-        <button className="back" onClick={() => { s.setParentUnlocked(false); onHome() }} aria-label="Zurück">←</button>
-        <div className="topbar-title">👨‍👩‍👦 Elternbereich</div>
-        <div />
-      </div>
+    <div className="practice">
+      <header className="page-head">
+        <h1>👨‍👩‍👦 Elternbereich</h1>
+        <button className="btn gray small" onClick={() => s.setParentUnlocked(false)}>🔒 Sperren</button>
+      </header>
       <div className="parents">
         <section className="pcard">
           <h3>Einstellungen</h3>
@@ -62,7 +57,7 @@ export function Parents({ onHome }: { onHome: () => void }) {
             <span>Name des Kindes</span>
             <span className="prow-right">
               <input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder="z. B. Leo" />
-              <button className="btn small" onClick={() => s.setName(name.trim())}>Speichern</button>
+              <button className="btn blue small" onClick={() => s.setName(name.trim())}>Speichern</button>
             </span>
           </label>
           <label className="prow">
@@ -99,7 +94,7 @@ export function Parents({ onHome }: { onHome: () => void }) {
                       <option key={v.name} value={v.name}>{v.label}</option>
                     ))}
                   </select>
-                  <button className="btn small" onClick={() => speak(sample, lang)}>▶ Test</button>
+                  <button className="btn blue small" onClick={() => speak(sample, lang)}>▶ Test</button>
                 </span>
               </div>
             )
@@ -119,7 +114,7 @@ export function Parents({ onHome }: { onHome: () => void }) {
         <section className="pcard">
           <h3>Fortschritt</h3>
           <p className="muted">
-            {overall.p} Spiele gespielt · {overall.t ? Math.round((overall.c / overall.t) * 100) : 0}% richtig · {s.totalStars} ⭐ · Serie: {s.streak} Tag(e)
+            {overall.p} Lektionen · {overall.t ? Math.round((overall.c / overall.t) * 100) : 0}% richtig · {s.xp} XP · {Object.values(s.nodes).filter((n) => n.done).length} Pfad-Lektionen geschafft · Serie: {s.streak} Tag(e)
           </p>
           <table className="ptable">
             <thead>
@@ -157,13 +152,13 @@ export function Parents({ onHome }: { onHome: () => void }) {
         <section className="pcard danger">
           <h3>Zurücksetzen</h3>
           {!confirmReset ? (
-            <button className="btn secondary" onClick={() => setConfirmReset(true)}>Alle Fortschritte löschen …</button>
+            <button className="btn gray" onClick={() => setConfirmReset(true)}>Alle Fortschritte löschen …</button>
           ) : (
             <div className="prow">
               <span>Wirklich alles löschen?</span>
               <span>
-                <button className="btn small danger" onClick={() => { s.reset(); setConfirmReset(false) }}>Ja, löschen</button>{' '}
-                <button className="btn small secondary" onClick={() => setConfirmReset(false)}>Abbrechen</button>
+                <button className="btn small red" onClick={() => { s.reset(); setConfirmReset(false) }}>Ja, löschen</button>{' '}
+                <button className="btn small gray" onClick={() => setConfirmReset(false)}>Abbrechen</button>
               </span>
             </div>
           )}

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import confetti from 'canvas-confetti'
 import type { GameProps } from '../components/ChoiceGame'
 import { Mascot } from '../components/Mascot'
+import { LessonShell } from '../components/LessonShell'
 import { praise, speak, speakBoth } from '../lib/speech'
 import { pickN, shuffle } from '../lib/util'
 
@@ -15,7 +16,7 @@ function sayFor(ch: string) {
   return { de: `Fahre das große ${ch} nach.`, it: `Ripassa la ${ch} grande.` }
 }
 
-export default function Nachspuren({ level, bilingual, childName, onFinish }: GameProps) {
+export default function Nachspuren({ level, bilingual, childName, onFinish, onClose }: GameProps) {
   const targets = useMemo(() => {
     const name = Array.from(new Set(childName.toUpperCase().replace(/[^A-ZÄÖÜ]/g, '').split('')))
     if (level === 1) return shuffle([...name.slice(0, 3), ...pickN(L1, 5 - Math.min(3, name.length))])
@@ -25,6 +26,7 @@ export default function Nachspuren({ level, bilingual, childName, onFinish }: Ga
 
   const [idx, setIdx] = useState(0)
   const [attempts, setAttempts] = useState(0)
+  const [hearts, setHearts] = useState(3)
   const [good, setGood] = useState(0)
   const [msg, setMsg] = useState<string | null>(null)
   const [solved, setSolved] = useState(false)
@@ -121,29 +123,34 @@ export default function Nachspuren({ level, bilingual, childName, onFinish }: Ga
       const firstTry = attempts === 0
       const newGood = good + (firstTry ? 1 : 0)
       setGood(newGood)
-      if (idx + 1 >= targets.length) onFinish(newGood, targets.length)
+      if (idx + 1 >= targets.length) onFinish(newGood, targets.length, hearts)
       else setIdx(idx + 1)
     } else {
       setAttempts((a) => a + 1)
+      if (attempts === 0) setHearts((h) => Math.max(0, h - 1))
       const m = drawn === 0 ? 'Male mit dem Finger über den grauen Buchstaben!' : coverage < 0.55 ? 'Fahre den ganzen Buchstaben nach!' : 'Bleib auf dem grauen Buchstaben!'
       setMsg(m)
       speak(m, 'de')
     }
   }
   const skip = () => {
-    if (idx + 1 >= targets.length) onFinish(good, targets.length)
+    if (idx + 1 >= targets.length) onFinish(good, targets.length, hearts)
     else setIdx(idx + 1)
   }
 
+  const footer = (
+    <div className="trace-actions">
+      <button className="btn white" onClick={clear}>🧽 Löschen</button>
+      {attempts >= 2 && <button className="btn white" onClick={skip}>⏭️ Weiter</button>}
+      <button className="btn green" onClick={evaluate}>Fertig</button>
+    </div>
+  )
+
   return (
-    <div className="game">
-      <div className="progress">
-        {targets.map((_, i) => (
-          <span key={i} className={'dot' + (i < idx ? ' done' : i === idx ? ' now' : '')} />
-        ))}
-      </div>
-      <div className="prompt-row">
-        <Mascot mood={solved ? 'happy' : 'normal'} />
+    <LessonShell progress={idx / targets.length} hearts={hearts} onClose={onClose} footer={footer}>
+      <div className="q">
+      <div className="q-head">
+        <Mascot mood={solved ? 'happy' : 'normal'} size={56} />
         <button className="bubble" onClick={() => { const s = sayFor(ch); speakBoth(s.de, s.it, bilingual) }}>
           <div className="bubble-de">{msg ?? sayFor(ch).de}</div>
           {bilingual && !msg && <div className="bubble-it">{sayFor(ch).it}</div>}
@@ -164,11 +171,7 @@ export default function Nachspuren({ level, bilingual, childName, onFinish }: Ga
           onPointerLeave={onUp}
         />
       </div>
-      <div className="trace-actions">
-        <button className="btn secondary" onClick={clear}>🧽 Löschen</button>
-        <button className="btn" onClick={evaluate}>✅ Fertig</button>
-        {attempts >= 2 && <button className="btn ghost" onClick={skip}>⏭️ Weiter</button>}
       </div>
-    </div>
+    </LessonShell>
   )
 }

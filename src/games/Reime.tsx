@@ -3,7 +3,7 @@ import { ChoiceGame, type GameProps, type Round } from '../components/ChoiceGame
 import { RHYME_GROUPS } from '../data/words'
 import { pick, pickN, shuffle } from '../lib/util'
 
-export default function Reime({ level, bilingual, onFinish }: GameProps) {
+export default function Reime({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     const groups = pickN(RHYME_GROUPS, 6)
     return groups.map((g, gi) => {
@@ -39,5 +39,5 @@ export default function Reime({ level, bilingual, onFinish }: GameProps) {
       }
     })
   }, [level]) // eslint-disable-line react-hooks/exhaustive-deps
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

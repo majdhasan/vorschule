@@ -4,7 +4,7 @@ import { Emojis } from '../components/Emojis'
 import { WORDS } from '../data/words'
 import { pickN, randInt, coin } from '../lib/util'
 
-export default function Mengen({ level, bilingual, onFinish }: GameProps) {
+export default function Mengen({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     return Array.from({ length: 6 }, () => {
       const max = level === 1 ? 6 : 10
@@ -26,5 +26,5 @@ export default function Mengen({ level, bilingual, onFinish }: GameProps) {
       }
     })
   }, [level])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

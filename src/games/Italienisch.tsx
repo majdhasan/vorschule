@@ -4,7 +4,7 @@ import { WORDS } from '../data/words'
 import { pickN, shuffle } from '../lib/util'
 
 /** Hear the Italian word, find the picture. Always bilingual. */
-export default function Italienisch({ level, onFinish }: GameProps) {
+export default function Italienisch({ level, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     const words = pickN(WORDS, 6)
     const nOpts = level === 1 ? 3 : level === 2 ? 4 : 6
@@ -32,5 +32,5 @@ export default function Italienisch({ level, onFinish }: GameProps) {
       }
     })
   }, [level]) // eslint-disable-line react-hooks/exhaustive-deps
-  return <ChoiceGame rounds={rounds} bilingual={true} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={true} onFinish={onFinish} onClose={onClose} />
 }

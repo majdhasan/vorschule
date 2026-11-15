@@ -5,7 +5,7 @@ import { pickN, shuffle } from '../lib/util'
 
 const EASY = 'AEIOMLSNTRBPKDFHUW'.split('')
 
-export default function Buchstaben({ level, bilingual, childName, onFinish }: GameProps) {
+export default function Buchstaben({ level, bilingual, childName, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     const nameLetters = Array.from(new Set(childName.toUpperCase().replace(/[^A-Z]/g, '').split('')))
     const pool = level === 1 ? Array.from(new Set([...nameLetters, ...EASY])) : ALPHABET
@@ -52,5 +52,5 @@ export default function Buchstaben({ level, bilingual, childName, onFinish }: Ga
       }
     })
   }, [level]) // eslint-disable-line react-hooks/exhaustive-deps
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

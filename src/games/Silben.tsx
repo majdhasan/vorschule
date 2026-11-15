@@ -3,7 +3,7 @@ import { ChoiceGame, type GameProps, type Round } from '../components/ChoiceGame
 import { SYLLABLE_WORDS } from '../data/words'
 import { pickN, range } from '../lib/util'
 
-export default function Silben({ level, bilingual, onFinish }: GameProps) {
+export default function Silben({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     const maxSyl = level === 1 ? 3 : 4
     const pool = SYLLABLE_WORDS.filter((w) => w.syl <= maxSyl && (level > 1 || w.syl !== 4))
@@ -35,5 +35,5 @@ export default function Silben({ level, bilingual, onFinish }: GameProps) {
       columns: maxSyl === 3 ? 3 : 2,
     }))
   }, [level]) // eslint-disable-line react-hooks/exhaustive-deps
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

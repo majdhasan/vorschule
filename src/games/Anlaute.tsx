@@ -3,7 +3,7 @@ import { ChoiceGame, type GameProps, type Round } from '../components/ChoiceGame
 import { ANLAUT_LETTERS, ANLAUT_WORDS } from '../data/words'
 import { pickN, shuffle } from '../lib/util'
 
-export default function Anlaute({ level, bilingual, onFinish }: GameProps) {
+export default function Anlaute({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     const words = pickN(ANLAUT_WORDS, 6)
     return words.map((w) => {
@@ -51,5 +51,5 @@ export default function Anlaute({ level, bilingual, onFinish }: GameProps) {
       }
     })
   }, [level]) // eslint-disable-line react-hooks/exhaustive-deps
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

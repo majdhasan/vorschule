@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react'
 import confetti from 'canvas-confetti'
 import type { GameProps } from '../components/ChoiceGame'
 import { Mascot } from '../components/Mascot'
+import { LessonShell } from '../components/LessonShell'
 import { speak, speakBoth } from '../lib/speech'
 import { WORDS } from '../data/words'
 import { pickN, shuffle } from '../lib/util'
 
 type Card = { id: number; word: (typeof WORDS)[number]; flipped: boolean; matched: boolean }
 
-export default function Memory({ level, bilingual, onFinish }: GameProps) {
+export default function Memory({ level, bilingual, onFinish, onClose }: GameProps) {
   const pairs = level === 1 ? 4 : level === 2 ? 6 : 8
   const cards0 = useMemo<Card[]>(() => {
     const ws = pickN(WORDS, pairs)
@@ -43,8 +44,9 @@ export default function Memory({ level, bilingual, onFinish }: GameProps) {
         if (matched.every((c) => c.matched)) {
           const totalMoves = moves + 1
           const ratio = Math.min(1, (pairs * 1.6) / totalMoves)
+          const hearts = totalMoves <= pairs * 1.6 ? 3 : totalMoves <= pairs * 2.2 ? 2 : 1
           speak('Alle Paare gefunden! Super!', 'de')
-          setTimeout(() => onFinish(Math.round(ratio * 10), 10), 1500)
+          setTimeout(() => onFinish(Math.round(ratio * 10), 10, hearts), 1500)
         }
       } else {
         setLock(true)
@@ -58,10 +60,13 @@ export default function Memory({ level, bilingual, onFinish }: GameProps) {
   }
 
   const cols = 4
+  const matchedPairs = cards.filter((c) => c.matched).length / 2
+  const heartsNow = moves <= pairs * 1.6 ? 3 : moves <= pairs * 2.2 ? 2 : 1
   return (
-    <div className="game">
-      <div className="prompt-row">
-        <Mascot />
+    <LessonShell progress={matchedPairs / pairs} hearts={heartsNow} onClose={onClose}>
+      <div className="q">
+      <div className="q-head">
+        <Mascot size={56} />
         <div className="bubble static">
           <div className="bubble-de">Finde die Paare!</div>
           {bilingual && <div className="bubble-it">Trova le coppie!</div>}
@@ -81,6 +86,7 @@ export default function Memory({ level, bilingual, onFinish }: GameProps) {
           </button>
         ))}
       </div>
-    </div>
+      </div>
+    </LessonShell>
   )
 }

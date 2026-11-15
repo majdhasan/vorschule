@@ -13,7 +13,7 @@ function Dots({ n, color }: { n: number; color: string }) {
   )
 }
 
-export default function Rechnen({ level, bilingual, onFinish }: GameProps) {
+export default function Rechnen({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     return Array.from({ length: 6 }, () => {
       const max = level === 3 ? 20 : 10
@@ -57,5 +57,5 @@ export default function Rechnen({ level, bilingual, onFinish }: GameProps) {
       }
     })
   }, [level])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

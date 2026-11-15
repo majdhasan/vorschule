@@ -12,7 +12,7 @@ const DAILY = [
   { q: 'Welche Tage sind Wochenende?', qIt: 'Quali giorni sono il fine settimana?', a: 'Samstag und Sonntag', e: '🎉', d: [{ l: 'Montag und Dienstag', e: '🏫' }, { l: 'Mittwoch', e: '📅' }] },
 ]
 
-export default function Zeit({ level, bilingual, onFinish }: GameProps) {
+export default function Zeit({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     const out: Round[] = []
     // 2 weekday rounds
@@ -61,5 +61,5 @@ export default function Zeit({ level, bilingual, onFinish }: GameProps) {
     }
     return shuffle(out)
   }, [level])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

@@ -9,7 +9,7 @@ const PATTERNS: Record<number, string[]> = {
   3: ['ABCD', 'ABB', 'AAB', 'ABCC'],
 }
 
-export default function Muster({ level, bilingual, onFinish }: GameProps) {
+export default function Muster({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     return Array.from({ length: 6 }, () => {
       const pat = pick(PATTERNS[level])
@@ -40,5 +40,5 @@ export default function Muster({ level, bilingual, onFinish }: GameProps) {
       }
     })
   }, [level])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

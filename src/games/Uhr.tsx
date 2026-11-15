@@ -12,7 +12,7 @@ const sayIt = (t: T) => {
   return t.m === 0 ? names[t.h] : `${names[t.h]} e mezza`
 }
 
-export default function Uhr({ level, bilingual, onFinish }: GameProps) {
+export default function Uhr({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     return Array.from({ length: 6 }, () => {
       const half = level >= 2 && coin()
@@ -34,5 +34,5 @@ export default function Uhr({ level, bilingual, onFinish }: GameProps) {
       }
     })
   }, [level])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

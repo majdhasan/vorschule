@@ -5,7 +5,7 @@ import { NUMBER_WORDS_DE, NUMBER_WORDS_IT } from '../data/misc'
 import { WORDS } from '../data/words'
 import { pick, randInt, shuffle } from '../lib/util'
 
-export default function Zaehlen({ level, bilingual, onFinish }: GameProps) {
+export default function Zaehlen({ level, bilingual, onFinish, onClose }: GameProps) {
   const rounds = useMemo<Round[]>(() => {
     const [min, max, nOpts] = level === 1 ? [1, 5, 3] : level === 2 ? [1, 10, 3] : [5, 20, 4]
     return Array.from({ length: 6 }, () => {
@@ -24,5 +24,5 @@ export default function Zaehlen({ level, bilingual, onFinish }: GameProps) {
       }
     })
   }, [level])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} />
+  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

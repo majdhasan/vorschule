@@ -1,63 +1,46 @@
 import { useState } from 'react'
 import { EndScreen } from '../components/EndScreen'
+import { QuestScreen } from '../components/QuestScreen'
 import { gameById } from '../games'
-import { statsFor, useStore } from '../lib/store'
+import { useStore, type LessonResult } from '../lib/store'
 import { stopSpeech } from '../lib/speech'
-import { starsFor } from '../lib/util'
 
-type Props = { id: string; onHome: () => void }
+type Props = { nodeId?: string; gameId: string; level: number; onHome: () => void }
 
-export function GameScreen({ id, onHome }: Props) {
-  const game = gameById(id)
-  const { games, bilingual, childName, recordGame, stickersUnlocked } = useStore()
-  const level = statsFor(games, id).level
-  const [run, setRun] = useState(0)
-  const [result, setResult] = useState<{ correct: number; total: number; stars: number; newSticker: boolean; levelUp: boolean } | null>(null)
+export function GameScreen({ nodeId, gameId, level, onHome }: Props) {
+  const game = gameById(gameId)
+  const { bilingual, childName, recordLesson } = useStore()
+  const [step, setStep] = useState<'play' | 'end' | 'quests'>('play')
+  const [result, setResult] = useState<(LessonResult & { perfect: boolean; seconds: number }) | null>(null)
+  const [start] = useState(() => Date.now())
 
-  const onFinish = (correct: number, total: number) => {
-    const stars = starsFor(correct, total)
-    const r = recordGame(id, correct, total, stars)
-    setResult({ correct, total, stars, ...r })
+  const onFinish = (correct: number, total: number, hearts: number) => {
+    const r = recordLesson({ nodeId, gameId, correct, total, hearts })
+    setResult({ ...r, perfect: hearts >= 3 && correct === total, seconds: Math.round((Date.now() - start) / 1000) })
+    setStep('end')
   }
-  const again = () => {
-    setResult(null)
-    setRun((r) => r + 1)
-  }
-  const home = () => {
+  const close = () => {
     stopSpeech()
     onHome()
   }
   const C = game.component
 
-  return (
-    <div className="screen">
-      <div className="topbar" style={{ background: game.color }}>
-        <button className="back" onClick={home} aria-label="Zurück">
-          ←
-        </button>
-        <div className="topbar-title">
-          {game.emoji} {game.title}
-          {bilingual && <span className="topbar-it"> · {game.titleIt}</span>}
-        </div>
-        <div className="topbar-level" title="Stufe">
-          {'⭐'.repeat(level)}
-        </div>
-      </div>
-      {result ? (
-        <EndScreen
-          stars={result.stars}
-          correct={result.correct}
-          total={result.total}
-          bilingual={bilingual}
-          newSticker={result.newSticker}
-          levelUp={result.levelUp}
-          stickerIndex={stickersUnlocked}
-          onAgain={again}
-          onHome={home}
-        />
-      ) : (
-        <C key={run} level={level} bilingual={bilingual} childName={childName} onFinish={onFinish} />
-      )}
-    </div>
-  )
+  if (step === 'end' && result) {
+    return (
+      <EndScreen
+        xp={result.xp}
+        acc={result.acc}
+        seconds={result.seconds}
+        perfect={result.perfect}
+        nodeDone={result.nodeDone}
+        levelUp={result.levelUp}
+        bilingual={bilingual}
+        onNext={() => (result.questsAfter !== result.questsBefore || result.newStickers > 0 || result.questReward ? setStep('quests') : close())}
+      />
+    )
+  }
+  if (step === 'quests' && result) {
+    return <QuestScreen before={result.questsBefore} reward={result.questReward} newStickers={result.newStickers} onNext={close} />
+  }
+  return <C level={level} bilingual={bilingual} childName={childName} onFinish={onFinish} onClose={close} />
 }

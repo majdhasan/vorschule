@@ -19,8 +19,8 @@ export default defineConfig({
         short_name: 'Berli',
         description: 'Spielerisch fit für die Schule – Deutsch & Italienisch',
         lang: 'de',
-        theme_color: '#ffb703',
-        background_color: '#fff8e7',
+        theme_color: '#58CC02',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'any',
         icons: [

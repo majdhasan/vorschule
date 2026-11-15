@@ -1,63 +1,57 @@
 import { useEffect } from 'react'
 import confetti from 'canvas-confetti'
 import { speakBoth } from '../lib/speech'
-import { STICKERS } from '../data/misc'
 import { Mascot } from './Mascot'
 
 type Props = {
-  stars: number
-  correct: number
-  total: number
-  bilingual: boolean
-  newSticker: boolean
+  xp: number
+  acc: number
+  seconds: number
+  perfect: boolean
+  nodeDone: boolean
   levelUp: boolean
-  stickerIndex: number
-  onAgain: () => void
-  onHome: () => void
+  bilingual: boolean
+  onNext: () => void
 }
 
-export function EndScreen({ stars, correct, total, bilingual, newSticker, levelUp, stickerIndex, onAgain, onHome }: Props) {
-  const sticker = STICKERS[(stickerIndex - 1 + STICKERS.length) % STICKERS.length]
+export function EndScreen({ xp, acc, seconds, perfect, nodeDone, levelUp, bilingual, onNext }: Props) {
   useEffect(() => {
-    if (stars >= 2) confetti({ particleCount: 150, spread: 100, origin: { y: 0.6 } })
-    const de =
-      stars === 3 ? 'Fantastisch! Alles richtig!' : stars === 2 ? 'Sehr gut gemacht!' : stars === 1 ? 'Gut gemacht! Weiter so!' : 'Das üben wir noch einmal!'
-    const it = stars === 3 ? 'Fantastico! Tutto giusto!' : stars === 2 ? 'Molto bene!' : stars === 1 ? 'Bravo! Continua così!' : 'Riproviamo!'
-    const extra = newSticker ? ` Du hast einen neuen Sticker: ${sticker.de}!` : levelUp ? ' Du bist jetzt eine Stufe höher!' : ''
-    speakBoth(de + extra, it, bilingual)
+    confetti({ particleCount: perfect ? 220 : 120, spread: 110, origin: { y: 0.5 } })
+    const de = perfect ? 'Perfekt! Alles richtig!' : acc >= 0.6 ? 'Lektion geschafft! Super!' : 'Geschafft! Das üben wir nochmal.'
+    const it = perfect ? 'Perfetto!' : acc >= 0.6 ? 'Lezione completata! Bravo!' : 'Fatto! Riproviamo.'
+    speakBoth(`${de}${levelUp ? ' Du bist jetzt eine Stufe höher!' : ''}`, it, bilingual)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const mm = Math.floor(seconds / 60)
+  const ss = String(seconds % 60).padStart(2, '0')
   return (
     <div className="end">
-      <Mascot mood={stars >= 2 ? 'happy' : 'normal'} size={96} />
-      <div className="end-stars">
-        {[1, 2, 3].map((i) => (
-          <span key={i} className={'big-star' + (i <= stars ? ' on' : '')} style={{ animationDelay: `${i * 0.2}s` }}>
-            ⭐
-          </span>
-        ))}
+      <div className="end-top">
+        <Mascot mood="happy" size={110} />
+        <h1 className="end-title">{perfect ? 'Perfekt!' : 'Lektion geschafft!'}</h1>
+        {bilingual && <div className="end-sub">{perfect ? 'Perfetto!' : 'Lezione completata!'}</div>}
+        {nodeDone && <div className="end-note">⭐ Neue Lektion freigeschaltet!</div>}
+        {levelUp && <div className="end-note">⬆️ Neue Stufe!</div>}
       </div>
-      <div className="end-score">
-        {correct} / {total}
-      </div>
-      {levelUp && <div className="badge level">⬆️ Neue Stufe!</div>}
-      {newSticker && (
-        <div className="badge sticker">
-          <span className="sticker-big">{sticker.emoji}</span>
-          <span>
-            Neuer Sticker: <b>{sticker.de}</b>
-            {bilingual && <i> · {sticker.it}</i>}
-          </span>
+      <div className="stat-cards">
+        <div className="stat-card yellow" style={{ animationDelay: '0.1s' }}>
+          <div className="stat-label">Gesamt-XP</div>
+          <div className="stat-value">⚡ {xp}</div>
         </div>
-      )}
-      <div className="end-actions">
-        <button className="btn big" onClick={onAgain}>
-          🔁 Nochmal
-        </button>
-        <button className="btn big secondary" onClick={onHome}>
-          🏠 Zurück
-        </button>
+        <div className="stat-card green" style={{ animationDelay: '0.3s' }}>
+          <div className="stat-label">{perfect ? 'Fehlerfrei' : 'Genauigkeit'}</div>
+          <div className="stat-value">🎯 {Math.round(acc * 100)}%</div>
+        </div>
+        <div className="stat-card blue" style={{ animationDelay: '0.5s' }}>
+          <div className="stat-label">Zeit</div>
+          <div className="stat-value">⏱ {mm}:{ss}</div>
+        </div>
       </div>
+      <footer className="lesson-foot">
+        <button className="btn green block" onClick={onNext}>
+          Weiter
+        </button>
+      </footer>
     </div>
   )
 }
