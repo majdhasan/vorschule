@@ -118,19 +118,21 @@ export function drawHints(ctx: CanvasRenderingContext2D, px: number, strokes: St
   reset(ctx)
   ctx.clearRect(0, 0, px, px)
   fit(ctx, px)
-  // arrows
-  ctx.fillStyle = '#ff9600'
+  // direction chevrons (›) – unambiguous on diagonals and curves, unlike small triangles
+  ctx.strokeStyle = '#ff9600'
+  ctx.lineWidth = 2.4
+  ctx.lineCap = 'round'
+  ctx.lineJoin = 'round'
   for (const st of strokes) {
     if (st.dot) continue
-    for (let l = 13; l < st.len - 7; l += 22) {
+    for (let l = 14; l < st.len - 7; l += 20) {
       const [x, y] = at(st, l)
       const [dx, dy] = dirAt(st, l)
       ctx.beginPath()
-      ctx.moveTo(x + dx * 4, y + dy * 4)
-      ctx.lineTo(x - dx * 2.5 - dy * 3.4, y - dy * 2.5 + dx * 3.4)
-      ctx.lineTo(x - dx * 2.5 + dy * 3.4, y - dy * 2.5 - dx * 3.4)
-      ctx.closePath()
-      ctx.fill()
+      ctx.moveTo(x - dx * 2.6 - dy * 3.4, y - dy * 2.6 + dx * 3.4)
+      ctx.lineTo(x + dx * 2, y + dy * 2)
+      ctx.lineTo(x - dx * 2.6 + dy * 3.4, y - dy * 2.6 - dx * 3.4)
+      ctx.stroke()
     }
   }
   // start dots + numbered badges
