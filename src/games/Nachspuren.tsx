@@ -6,29 +6,26 @@ import { LessonShell } from '../components/LessonShell'
 import { praise, speak, speakBoth } from '../lib/speech'
 import { sfx } from '../lib/sfx'
 import { pickN, shuffle } from '../lib/util'
+import { drawDemo, drawGuide as drawStrokeGuide, drawHints, strokeCoverage, strokesFor } from './tracing'
 
 const L1 = 'AOMILET'.split('')
 const L2 = 'BCDFGHKNPRSUWZ12345'.split('')
 const L3 = 'abdeghmnrstuw67890'.split('')
 
-// Where writing starts (fraction of the glyph box) and the first direction.
-const DOWN: [number, number] = [0, 1]
-const LEFT: [number, number] = [-1, 0.35]
-const RIGHT: [number, number] = [1, 0]
-const START: Record<string, { at: [number, number]; dir: [number, number] }> = {
-  A: { at: [0.5, 0], dir: [-0.45, 1] }, Ä: { at: [0.5, 0.25], dir: [-0.45, 1] }, C: { at: [0.9, 0.15], dir: LEFT }, G: { at: [0.9, 0.15], dir: LEFT },
-  I: { at: [0.5, 0], dir: DOWN }, J: { at: [1, 0], dir: DOWN }, O: { at: [0.5, 0], dir: LEFT }, Ö: { at: [0.5, 0.25], dir: LEFT }, Q: { at: [0.5, 0], dir: LEFT },
-  S: { at: [0.85, 0.12], dir: LEFT }, T: { at: [0, 0], dir: RIGHT }, Z: { at: [0, 0], dir: RIGHT }, '0': { at: [0.5, 0], dir: LEFT },
-  '1': { at: [0.35, 0.18], dir: [1, -1] }, '2': { at: [0.1, 0.25], dir: [0.6, -1] }, '3': { at: [0.1, 0.15], dir: [1, -0.4] }, '4': { at: [0.6, 0], dir: [-0.5, 1] },
-  '5': { at: [0.2, 0], dir: DOWN }, '6': { at: [0.8, 0.05], dir: LEFT }, '7': { at: [0, 0], dir: RIGHT }, '8': { at: [0.85, 0.15], dir: LEFT }, '9': { at: [0.85, 0.25], dir: LEFT },
-  a: { at: [0.9, 0.3], dir: LEFT }, d: { at: [0.65, 0.45], dir: LEFT }, e: { at: [0.1, 0.55], dir: RIGHT }, g: { at: [0.85, 0.1], dir: LEFT },
-  s: { at: [0.85, 0.15], dir: LEFT }, t: { at: [0.4, 0], dir: DOWN },
-}
+const NUM = ['', 'eins', 'zwei', 'drei', 'vier', 'fünf']
 
 function sayFor(ch: string) {
-  if (/\d/.test(ch)) return { de: `Fahre die Zahl ${ch} nach.`, it: `Ripassa il numero ${ch}.` }
-  if (ch === ch.toLowerCase()) return { de: `Fahre das kleine ${ch.toUpperCase()} nach.`, it: `Ripassa la ${ch} piccola.` }
-  return { de: `Fahre das große ${ch} nach.`, it: `Ripassa la ${ch} grande.` }
+  const n = strokesFor(ch)?.filter((x) => !x.dot).length ?? 1
+  const order = n > 1 ? ` Fang bei der Eins an.` : ''
+  if (/\d/.test(ch)) return { de: `Fahre die Zahl ${ch} nach.${order}`, it: `Ripassa il numero ${ch}.` }
+  if (ch === ch.toLowerCase()) return { de: `Fahre das kleine ${ch.toUpperCase()} nach.${order}`, it: `Ripassa la ${ch} piccola.` }
+  return { de: `Fahre das große ${ch} nach.${order}`, it: `Ripassa la ${ch} grande.` }
+}
+
+/** Spoken while the demo draws: "Erst eins, dann zwei, dann drei." */
+function orderPhrase(n: number) {
+  if (n <= 1) return 'Schau mal, so geht das.'
+  return 'Schau mal: ' + Array.from({ length: n }, (_, i) => `${i === 0 ? 'erst' : 'dann'} ${NUM[i + 1] ?? i + 1}`).join(', ') + '.'
 }
 
 export default function Nachspuren({ level, bilingual, childName, onFinish, onClose }: GameProps) {
@@ -53,11 +50,17 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
   const alive = useRef(true)
   const idxRef = useRef(0)
   const autoTimer = useRef<number | undefined>(undefined)
+  const demoFrame = useRef(0)
   const ch = targets[idx]
+  const strokes = strokesFor(ch)
 
-  useEffect(() => () => {
-    alive.current = false
-    clearTimeout(autoTimer.current)
+  useEffect(() => {
+    alive.current = true // StrictMode mounts twice; re-arm after the first cleanup
+    return () => {
+      alive.current = false
+      clearTimeout(autoTimer.current)
+      cancelAnimationFrame(demoFrame.current)
+    }
   }, [])
 
   const drawGuide = () => {
@@ -65,53 +68,42 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
     const h = hintRef.current
     if (!c || !h) return
     const ctx = c.getContext('2d')!
+    const hc = h.getContext('2d')!
+    if (strokes) {
+      drawStrokeGuide(ctx, size, strokes)
+      drawHints(hc, size, strokes)
+      return
+    }
+    // fallback for a glyph without stroke data: plain font, no hints
     ctx.clearRect(0, 0, size, size)
+    hc.clearRect(0, 0, size, size)
     ctx.fillStyle = '#d9d9d9'
     ctx.font = `800 ${size * 0.78}px Nunito, 'Arial Rounded MT Bold', sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
     ctx.fillText(ch, size / 2, size / 2 + size * 0.04)
-    // start dot + arrow on a separate layer (must not count as part of the letter)
-    const data = ctx.getImageData(0, 0, size, size).data
-    let x0 = size, y0 = size, x1 = 0, y1 = 0
-    for (let y = 0; y < size; y += 2) for (let x = 0; x < size; x += 2) if (data[(y * size + x) * 4 + 3] > 0) {
-      if (x < x0) x0 = x
-      if (x > x1) x1 = x
-      if (y < y0) y0 = y
-      if (y > y1) y1 = y
-    }
-    const st = START[ch] ?? { at: [0, 0], dir: DOWN }
-    const tx = x0 + (x1 - x0) * st.at[0]
-    const ty = y0 + (y1 - y0) * st.at[1]
-    let best = { x: tx, y: ty, d: Infinity }
-    for (let y = y0; y <= y1; y += 2) for (let x = x0; x <= x1; x += 2) if (data[(y * size + x) * 4 + 3] > 0) {
-      const d = (x - tx) ** 2 + (y - ty) ** 2
-      if (d < best.d) best = { x, y, d }
-    }
+  }
+
+  /** Animate the strokes in order (blue pen), then go back to the numbered hints. */
+  const demo = (withVoice: boolean) => {
+    const h = hintRef.current
+    if (!strokes || !h) return
+    cancelAnimationFrame(demoFrame.current)
+    const n = strokes.length
+    const real = strokes.filter((x) => !x.dot).length
+    if (withVoice) speak(orderPhrase(real), 'de')
+    const perStroke = 900
+    const t0 = performance.now()
     const hc = h.getContext('2d')!
-    hc.clearRect(0, 0, size, size)
-    const r = size * 0.045
-    const [dx, dy] = st.dir
-    const len = Math.hypot(dx, dy)
-    const ux = dx / len, uy = dy / len
-    const ax = best.x + ux * size * 0.13, ay = best.y + uy * size * 0.13
-    hc.strokeStyle = '#ff9600'
-    hc.fillStyle = '#ff9600'
-    hc.lineWidth = size * 0.018
-    hc.lineCap = 'round'
-    hc.beginPath()
-    hc.moveTo(best.x + ux * r * 1.4, best.y + uy * r * 1.4)
-    hc.lineTo(ax, ay)
-    hc.stroke()
-    hc.beginPath()
-    hc.moveTo(ax + ux * size * 0.035, ay + uy * size * 0.035)
-    hc.lineTo(ax - uy * size * 0.03, ay + ux * size * 0.03)
-    hc.lineTo(ax + uy * size * 0.03, ay - ux * size * 0.03)
-    hc.fill()
-    hc.fillStyle = '#58cc02'
-    hc.beginPath()
-    hc.arc(best.x, best.y, r, 0, Math.PI * 2)
-    hc.fill()
+    const frame = (now: number) => {
+      if (!alive.current) return
+      const t = Math.min(n, (now - t0) / perStroke)
+      drawHints(hc, size, strokes)
+      drawDemo(hc, size, strokes, t)
+      if (t < n) demoFrame.current = requestAnimationFrame(frame)
+      else demoFrame.current = window.setTimeout(() => alive.current && drawHints(hc, size, strokes), 700) as unknown as number
+    }
+    demoFrame.current = requestAnimationFrame(frame)
   }
 
   useEffect(() => {
@@ -123,8 +115,15 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
     setFailed(0)
     const s = sayFor(ch)
     const t = setTimeout(() => speakBoth(s.de, s.it, bilingual), 300)
+    // show how it's written once per letter, quietly, while Berli talks
+    const d = setTimeout(() => demo(false), 700)
     document.fonts?.ready.then(() => alive.current && drawGuide())
-    return () => clearTimeout(t)
+    return () => {
+      clearTimeout(t)
+      clearTimeout(d)
+      cancelAnimationFrame(demoFrame.current)
+      clearTimeout(demoFrame.current)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [idx])
 
@@ -190,7 +189,10 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
     }
     const coverage = mask ? hit / mask : 0
     const outsideRatio = drawn ? outside / drawn : 1
-    const ok = coverage >= 0.35 && outsideRatio < 0.55
+    // every numbered stroke must be traced (a stem alone is not a K)
+    const perStroke = strokes ? strokeCoverage(strokes, d, size) : []
+    const missing = perStroke.findIndex((c, i) => c < (strokes![i].dot ? 0.5 : 0.55))
+    const ok = (strokes ? missing === -1 : coverage >= 0.35) && outsideRatio < 0.55
     if (ok) {
       const myIdx = idx
       setSolved(true)
@@ -206,13 +208,21 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
     }
     if (silent) return
     if (drawn === 0) {
-      const m = 'Male mit dem Finger über den grauen Buchstaben! Fang beim grünen Punkt an.'
+      const m = 'Male mit dem Finger über den grauen Buchstaben! Fang bei der grünen Eins an.'
       setMsg(m)
       speak(m, 'de')
       return
     }
     setFailed((a) => a + 1)
-    const m = coverage < 0.35 ? 'Fahre den ganzen Buchstaben nach!' : 'Bleib auf dem grauen Buchstaben!'
+    const numbered = strokes ? strokes.slice(0, missing + 1).filter((x) => !x.dot).length : 0
+    const m =
+      outsideRatio >= 0.55
+        ? 'Bleib auf dem grauen Buchstaben!'
+        : strokes && missing >= 0
+          ? strokes[missing].dot
+            ? 'Vergiss die Pünktchen nicht!'
+            : `Fast! Vergiss die ${NUM[numbered] ?? numbered} nicht!`
+          : 'Fahre den ganzen Buchstaben nach!'
     setMsg(m)
     speak(m, 'de')
   }
@@ -225,6 +235,7 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
   const footer = (
     <div className="trace-actions">
       <button className="btn white icon" onClick={clear} aria-label="Löschen">🧽</button>
+      {strokes && <button className="btn white icon" onClick={() => demo(true)} aria-label="Zeig mir wie">👀</button>}
       <button className="btn white icon" onClick={skip} aria-label="Überspringen">⏭️</button>
       <button className="btn green grow" onClick={() => evaluate(false)}>✓ Fertig</button>
     </div>

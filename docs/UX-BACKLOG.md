@@ -14,7 +14,7 @@ Effort: **S** under an hour, **M** a few hours, **L** a day or more.
 
 **2026-11-15: every item below is implemented**, with these deviations:
 
-- 4.1 Tracing shows a start dot and a first-direction arrow per glyph. Numbered multi-stroke arrows need stroke data per letter and are not done.
+- 4.1 Done in full on 2026-11-15: stroke-order data for A–Z, ÄÖÜ, 0–9 and the lowercase tracing letters, numbered badges, direction arrows, an animated demo and a per-stroke check.
 - 2.10 The parent gate no longer opens the keyboard. A long-press gate was not added.
 - 5.20 The daily lesson limit defaults to off; parents set 3, 5 or 8.
 - 1.7 Hearts never lock a lesson. Losing all hearts only removes the perfect bonus.

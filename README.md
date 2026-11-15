@@ -44,7 +44,7 @@ UI/UX nach Duolingo-Vorbild:
 | Sprache | Reime | Reimwörter erkennen |
 | Sprache | Silben klatschen | Wörter in Silben gliedern |
 | Sprache | Buchstaben | Groß-/Kleinbuchstaben, Buchstaben des eigenen Namens |
-| Sprache | Nachspuren | Feinmotorik: Buchstaben & Zahlen mit dem Finger nachfahren |
+| Sprache | Nachspuren | Buchstaben & Zahlen in Schreibreihenfolge nachfahren: nummerierte Striche, Pfeile, 👀-Vorführung |
 | Sprache | Italiano | Italienischen Wortschatz hören und Bild finden |
 | Zahlen | Zählen | Mengen bis 20, mit Punktbildern |
 | Zahlen | Mehr oder weniger | Mengen vergleichen |
