@@ -1,15 +1,17 @@
-import { useMemo } from 'react'
-import { ChoiceGame, type GameProps, type Round } from '../components/ChoiceGame'
+import type { Round } from '../components/ChoiceGame'
 import { BERLIN, SCHULWEG, type Quiz } from '../data/berlin'
-import { pickN, shuffle } from '../lib/util'
+import { shuffle } from '../lib/util'
+import { pickFocus, type Builder } from './types'
 
-function toRounds(qs: Quiz[]): Round[] {
-  return pickN(qs, 6).map((q) => {
+function toRounds(qs: Quiz[], focus: string[] | undefined, count: number): Round[] {
+  return pickFocus(qs, count, (q) => q.q, focus).map((q) => {
     const opts = shuffle(q.options.map((o, i) => ({ ...o, i })))
     return {
       promptDe: q.q,
       promptIt: q.qIt,
       factDe: q.fact,
+      readOptions: true,
+      item: q.q,
       options: opts.map((o) => ({
         key: String(o.i),
         node: (
@@ -27,12 +29,5 @@ function toRounds(qs: Quiz[]): Round[] {
   })
 }
 
-export function Berlin({ bilingual, onFinish, onClose }: GameProps) {
-  const rounds = useMemo(() => toRounds(BERLIN), [])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
-}
-
-export function Schulweg({ bilingual, onFinish, onClose }: GameProps) {
-  const rounds = useMemo(() => toRounds(SCHULWEG), [])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
-}
+export const buildBerlin: Builder = (_level, { focus, count = 6 }) => toRounds(BERLIN, focus, count)
+export const buildSchulweg: Builder = (_level, { focus, count = 6 }) => toRounds(SCHULWEG, focus, count)

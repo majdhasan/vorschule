@@ -1,8 +1,9 @@
 // The learning path: units of lessons, Duolingo style. Each lesson node is a
-// game at a fixed level; a chest node closes every unit.
+// game at a fixed level; every unit ends with a mixed test ("Prüfung") and a chest.
 export type LessonNode = { kind: 'lesson'; id: string; game: string; level: number }
+export type ReviewNode = { kind: 'review'; id: string; unit: string; level: number }
 export type ChestNode = { kind: 'chest'; id: string }
-export type PathNode = LessonNode | ChestNode
+export type PathNode = LessonNode | ReviewNode | ChestNode
 
 export type Unit = {
   id: string
@@ -18,7 +19,7 @@ const L = (game: string, level: number): LessonNode => ({ kind: 'lesson', id: `$
 
 const u = (id: string, title: string, titleIt: string, emoji: string, color: string, dark: string, lessons: LessonNode[]): Unit => ({
   id, title, titleIt, emoji, color, dark,
-  nodes: [...lessons, { kind: 'chest', id: `chest-${id}` }],
+  nodes: [...lessons, { kind: 'review', id: `review-${id}`, unit: id, level: Math.max(...lessons.map((l) => l.level)) }, { kind: 'chest', id: `chest-${id}` }],
 })
 
 export const UNITS: Unit[] = [
@@ -36,4 +37,12 @@ export const ALL_NODES: { node: PathNode; unit: Unit; index: number }[] = UNITS.
 
 export function findNode(id: string) {
   return ALL_NODES.find((n) => n.node.id === id)
+}
+
+export function unitById(id: string) {
+  return UNITS.find((x) => x.id === id)!
+}
+
+export function lessonsOf(unit: Unit): LessonNode[] {
+  return unit.nodes.filter((n): n is LessonNode => n.kind === 'lesson')
 }

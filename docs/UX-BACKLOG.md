@@ -10,7 +10,16 @@ Merged result of a four-way audit on 2026-11-15:
 Duplicates are merged. Each item names the file to touch. Priority: **P1** fix first, **P2** next, **P3** polish.
 Effort: **S** under an hour, **M** a few hours, **L** a day or more.
 
-## Done
+## Status
+
+**2026-11-15: every item below is implemented**, with these deviations:
+
+- 4.1 Tracing shows a start dot and a first-direction arrow per glyph. Numbered multi-stroke arrows need stroke data per letter and are not done.
+- 2.10 The parent gate no longer opens the keyboard. A long-press gate was not added.
+- 5.20 The daily lesson limit defaults to off; parents set 3, 5 or 8.
+- 1.7 Hearts never lock a lesson. Losing all hearts only removes the perfect bonus.
+
+## Done earlier
 
 - [x] **Retry the same question after a wrong answer** (kid's request). Wrong option turns red and is disabled, red "Nochmal versuchen" button, one heart lost per question, answer revealed after the second wrong pick, question re-queued at the end. `src/components/ChoiceGame.tsx`, commit 5cb1dc9.
 

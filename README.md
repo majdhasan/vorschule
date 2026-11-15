@@ -22,14 +22,21 @@ sodass das Kind noch nicht lesen können muss.
 
 UI/UX nach Duolingo-Vorbild:
 
-- **Lernpfad** mit 8 Einheiten und 46 Lektionen (`src/data/path.ts`). Lektionen schalten sich nacheinander frei,
-  jede Einheit endet mit einer Schatztruhe (XP + Sticker). Die aktuelle Lektion pulsiert mit „START“-Sprechblase.
-- **Lektion**: Antwort antippen → „Überprüfen“ → grüne/rote Rückmeldung unten → „Weiter“. Fortschrittsbalken oben,
-  3 Herzen, falsch beantwortete Aufgaben kommen am Ende noch einmal. 6 Aufgaben pro Lektion.
-- **XP** statt Sterne: 10 XP pro neuer Lektion, 5 fürs Wiederholen, 8 fürs freie Üben, +5 bei fehlerfreier Runde.
-  Alle 80 XP ein Sticker. Am Ende Statistik-Karten (XP, Genauigkeit, Zeit).
-- **Tagesaufgaben**: 30 XP, 3 Lektionen, 1 perfekte Lektion → Bonus-Sticker. Tages-Serie 🔥.
-- **Üben**-Tab: jedes Spiel in jeder Stufe frei wählbar.
+- **Lernpfad** mit 8 Einheiten (`src/data/path.ts`). Jede Einheit: Lektionen → **Prüfung** (alle Spiele der Einheit
+  gemischt) → **Schatztruhe** (zweimal antippen). Der Pfad scrollt automatisch zur aktuellen Lektion; die
+  Einheiten-Kopfzeile bleibt oben stehen und hat einen „Weiter“-Knopf.
+- **Kronen**: Wiederholen einer geschafften Lektion spielt sie eine Stufe schwerer. 👑1 → 👑2 → 👑3 = 🏅 Legendär.
+- **Lektion**: Antwort antippen → „Überprüfen“. Falsch → die Antwort wird rot, „Nochmal versuchen“ auf derselben Frage.
+  Nach zwei Fehlversuchen zeigt Berli die Lösung, die Frage kommt am Ende noch einmal. Ein Herz pro Frage, keine Sperre.
+  Combo-Anzeige bei 3/5/8 richtigen in Folge. Text-Antworten werden vorgelesen. Soundeffekte und Vibration.
+- **Ende einer Lektion**: XP zählen hoch, Bonus-Chips, ⭐⭐⭐, dann Serien-Bildschirm 🔥 und Tagesaufgaben.
+- **Tagesaufgaben**: täglich das XP-Tagesziel plus zwei wechselnde Aufgaben. Alle geschafft → Truhe mit 💎 und Sticker.
+- **Serie** zählt nur Tage mit Lektion. 🧊 Streak-Schutz rettet verpasste Tage (1 gratis pro Woche, max. 2).
+- **Edelsteine 💎** für Lektionen, Truhen, Aufgaben, Medaillen. Im **Laden**: Sticker, Streak-Schutz, Kleidung für Berli,
+  Pfad-Themen.
+- **Ich**-Tab: Profil, Sticker in Sets (mit seltenen Stickern und Set-Bonus), Medaillen in drei Stufen.
+- **Üben**-Tab: jedes Spiel in jeder Stufe, „🎧 Nur hören“-Modus, **Fehler üben** mit den Fragen, die noch schwer waren.
+- **Familien-Liga**: bis zu drei Erwachsene/Geschwister sammeln Wochen-XP mit, Montag geht es von vorne los.
 
 | Bereich | Spiel | Trainiert |
 |---|---|---|
@@ -39,23 +46,25 @@ UI/UX nach Duolingo-Vorbild:
 | Sprache | Buchstaben | Groß-/Kleinbuchstaben, Buchstaben des eigenen Namens |
 | Sprache | Nachspuren | Feinmotorik: Buchstaben & Zahlen mit dem Finger nachfahren |
 | Sprache | Italiano | Italienischen Wortschatz hören und Bild finden |
-| Zahlen | Zählen | Mengen bis 20 |
+| Zahlen | Zählen | Mengen bis 20, mit Punktbildern |
 | Zahlen | Mehr oder weniger | Mengen vergleichen |
-| Zahlen | Plus und Minus | Rechnen bis 10, später bis 20 |
+| Zahlen | Plus und Minus | Rechnen bis 10 mit Punkten, Minus zum Wegstreichen |
 | Zahlen | Formen & Farben | Formen und Farben (de + it, mit korrekten Artikeln) |
-| Zahlen | Uhrzeit | Volle und halbe Stunden |
+| Zahlen | Uhrzeit | Volle Stunden |
 | Denken | Muster | Muster erkennen und fortsetzen |
 | Denken | Memory | Konzentration, Merkfähigkeit |
 | Welt | Tage & Jahreszeiten | Wochentage, Jahreszeiten, Tagesablauf |
 | Welt | Mein Berlin | Fernsehturm, Spree, Ampelmännchen, 112 … |
 | Welt | Schulweg & Schule | Ampel, Zebrastreifen, Schulranzen, Schulregeln |
 
-Jedes Spiel hat 3 Stufen. Zwei starke Runden hintereinander → eine Stufe höher, zwei schwache → eine Stufe zurück.
+Jedes Spiel hat 3 Stufen. Im freien Üben gilt: zwei starke Runden hintereinander → eine Stufe höher, zwei schwache → eine
+Stufe zurück. Lautspiele sprechen Laute („mmm“), keine Buchstabennamen, und nie mit italienischer Stimme.
 
 ## Elternbereich
 
-Unten rechts auf „Eltern“, dann eine Malaufgabe lösen. Dort: Name des Kindes, Zweisprachigkeit an/aus,
-Sprachausgabe an/aus, Fortschrittstabelle pro Spiel, Hinweise zu den Berliner Schulerwartungen, Zurücksetzen.
+Unten rechts auf „Eltern“, dann eine Malaufgabe lösen. Dort: Name und Avatar des Kindes, Zweisprachigkeit,
+Sprachausgabe, Stimmenwahl, Tagesziel (10–50 XP), optionales Tageslimit an Lektionen, Familien-Liga-Mitglieder,
+XP der letzten 7 Tage mit „Woran üben“, Fortschrittstabelle pro Spiel, Berliner Schulerwartungen, Zurücksetzen.
 
 ## Technik
 

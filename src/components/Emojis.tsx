@@ -16,3 +16,25 @@ export function Emojis({ emoji, n, size = 44, rowOf = 5 }: { emoji: string; n: n
     </div>
   )
 }
+
+/** Counting dots in rows of 5; the last `crossed` ones are shown as taken away. */
+export function Dots({ n, color, crossed = 0 }: { n: number; color: string; crossed?: number }) {
+  return (
+    <span className="dots">
+      {Array.from({ length: n }, (_, i) => (
+        <span key={i} className={'dotbig' + (i >= n - crossed ? ' crossed' : '')} style={{ background: color }} />
+      ))}
+    </span>
+  )
+}
+
+/** Tiny dot pattern under a numeral. */
+export function MiniDots({ n }: { n: number }) {
+  return (
+    <span className="mini-dots" aria-hidden>
+      {Array.from({ length: n }, (_, i) => (
+        <i key={i} />
+      ))}
+    </span>
+  )
+}

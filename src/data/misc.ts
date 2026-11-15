@@ -40,36 +40,78 @@ export const SEASONS = [
   { de: 'Winter', it: 'inverno', emoji: '⛄', hint: 'Es schneit und wir bauen einen Schneemann.' },
 ]
 
-// Stickers unlocked with stars (one per STICKER_EVERY stars)
-export const STICKERS = [
-  { emoji: '🐻', de: 'Berliner Bär', it: 'orso di Berlino' },
-  { emoji: '🚀', de: 'Rakete', it: 'razzo' },
-  { emoji: '🦄', de: 'Einhorn', it: 'unicorno' },
-  { emoji: '🚒', de: 'Feuerwehr', it: 'pompieri' },
-  { emoji: '🐉', de: 'Drache', it: 'drago' },
-  { emoji: '🏆', de: 'Pokal', it: 'coppa' },
-  { emoji: '🦖', de: 'T-Rex', it: 'T-Rex' },
-  { emoji: '🚆', de: 'S-Bahn', it: 'treno' },
-  { emoji: '🎸', de: 'Gitarre', it: 'chitarra' },
-  { emoji: '🦁', de: 'Löwe', it: 'leone' },
-  { emoji: '🍕', de: 'Pizza', it: 'pizza' },
-  { emoji: '🛸', de: 'Ufo', it: 'ufo' },
-  { emoji: '🐬', de: 'Delfin', it: 'delfino' },
-  { emoji: '🎪', de: 'Zirkus', it: 'circo' },
-  { emoji: '🦸', de: 'Superheld', it: 'supereroe' },
-  { emoji: '🐙', de: 'Krake', it: 'polpo' },
-  { emoji: '🏰', de: 'Schloss', it: 'castello' },
-  { emoji: '🎠', de: 'Karussell', it: 'giostra' },
-  { emoji: '🦜', de: 'Papagei', it: 'pappagallo' },
-  { emoji: '🚁', de: 'Hubschrauber', it: 'elicottero' },
-  { emoji: '🧙', de: 'Zauberer', it: 'mago' },
-  { emoji: '🐼', de: 'Panda', it: 'panda' },
-  { emoji: '⚽', de: 'Fußball', it: 'pallone' },
-  { emoji: '🌈', de: 'Regenbogen', it: 'arcobaleno' },
-  { emoji: '🦊', de: 'Fuchs', it: 'volpe' },
-  { emoji: '🎂', de: 'Torte', it: 'torta' },
-  { emoji: '🐳', de: 'Wal', it: 'balena' },
-  { emoji: '🏎️', de: 'Rennauto', it: 'auto da corsa' },
-  { emoji: '👑', de: 'Krone', it: 'corona' },
-  { emoji: '🎓', de: 'Schulkind!', it: 'scolaro!' },
+// ---------- stickers: themed sets, some rare ----------
+export type Sticker = { id: string; emoji: string; de: string; it: string; set: string; rare?: boolean }
+export const STICKER_SETS = [
+  { id: 'berlin', de: 'Berlin', it: 'Berlino', emoji: '🐻' },
+  { id: 'tiere', de: 'Tiere', it: 'Animali', emoji: '🦁' },
+  { id: 'weltall', de: 'Weltall', it: 'Spazio', emoji: '🚀' },
+  { id: 'italia', de: 'Italia', it: 'Italia', emoji: '🇮🇹' },
+  { id: 'schule', de: 'Schule', it: 'Scuola', emoji: '🎒' },
+] as const
+
+const st = (set: string, emoji: string, de: string, it: string, rare = false): Sticker => ({ id: emoji, emoji, de, it, set, rare })
+export const STICKERS: Sticker[] = [
+  st('berlin', '🐻', 'Berliner Bär', 'orso di Berlino'),
+  st('berlin', '🚆', 'S-Bahn', 'treno'),
+  st('berlin', '🚇', 'U-Bahn', 'metropolitana'),
+  st('berlin', '🗼', 'Fernsehturm', 'torre della TV'),
+  st('berlin', '🌭', 'Currywurst', 'currywurst'),
+  st('berlin', '🚤', 'Spree-Boot', 'barca sulla Sprea'),
+  st('berlin', '🚦', 'Ampelmännchen', 'omino del semaforo'),
+  st('berlin', '🏰', 'Schloss', 'castello', true),
+  st('tiere', '🦁', 'Löwe', 'leone'),
+  st('tiere', '🐼', 'Panda', 'panda'),
+  st('tiere', '🦊', 'Fuchs', 'volpe'),
+  st('tiere', '🐬', 'Delfin', 'delfino'),
+  st('tiere', '🐙', 'Krake', 'polpo'),
+  st('tiere', '🦜', 'Papagei', 'pappagallo'),
+  st('tiere', '🦖', 'T-Rex', 'T-Rex'),
+  st('tiere', '🦄', 'Einhorn', 'unicorno', true),
+  st('tiere', '🐉', 'Drache', 'drago', true),
+  st('weltall', '🚀', 'Rakete', 'razzo'),
+  st('weltall', '🛸', 'Ufo', 'ufo'),
+  st('weltall', '🪐', 'Saturn', 'Saturno'),
+  st('weltall', '🌙', 'Mond', 'luna'),
+  st('weltall', '☄️', 'Komet', 'cometa'),
+  st('weltall', '👽', 'Außerirdischer', 'alieno'),
+  st('weltall', '👩‍🚀', 'Astronautin', 'astronauta', true),
+  st('italia', '🍕', 'Pizza', 'pizza'),
+  st('italia', '🍝', 'Spaghetti', 'spaghetti'),
+  st('italia', '🍦', 'Gelato', 'gelato'),
+  st('italia', '🛵', 'Vespa', 'Vespa'),
+  st('italia', '🍋', 'Zitrone', 'limone'),
+  st('italia', '⛵', 'Segelboot', 'barca a vela'),
+  st('italia', '🌋', 'Vesuv', 'Vesuvio', true),
+  st('schule', '🎒', 'Schulranzen', 'zaino'),
+  st('schule', '✏️', 'Bleistift', 'matita'),
+  st('schule', '📚', 'Bücher', 'libri'),
+  st('schule', '🖍️', 'Wachsmalstifte', 'pastelli'),
+  st('schule', '🧮', 'Rechenschieber', 'pallottoliere'),
+  st('schule', '🏆', 'Pokal', 'coppa'),
+  st('schule', '🎓', 'Schulkind!', 'scolaro!', true),
 ]
+export const stickerById = (id: string) => STICKERS.find((s) => s.id === id)
+export const SET_BONUS_GEMS = 20
+
+// ---------- shop ----------
+export const OUTFITS = [
+  { id: '', emoji: '', de: 'Ohne', price: 0 },
+  { id: 'kappe', emoji: '🧢', de: 'Kappe', price: 20 },
+  { id: 'schleife', emoji: '🎀', de: 'Schleife', price: 20 },
+  { id: 'brille', emoji: '🕶️', de: 'Sonnenbrille', price: 30 },
+  { id: 'zylinder', emoji: '🎩', de: 'Zylinder', price: 30 },
+  { id: 'doktorhut', emoji: '🎓', de: 'Doktorhut', price: 40 },
+  { id: 'krone', emoji: '👑', de: 'Krone', price: 60 },
+]
+export const THEMES = [
+  { id: '', de: 'Standard', emoji: '🏞️', deco: [] as string[], price: 0 },
+  { id: 'wald', de: 'Wald', emoji: '🌲', deco: ['🌲', '🌳', '🍄', '🦔', '🌼'], price: 30 },
+  { id: 'meer', de: 'Meer', emoji: '🌊', deco: ['🐚', '🐠', '🌊', '🦀', '🐳'], price: 30 },
+  { id: 'weltall', de: 'Weltall', emoji: '🪐', deco: ['⭐', '🪐', '🌙', '✨', '☄️'], price: 40 },
+]
+export const STICKER_PACK_PRICE = 15
+export const FREEZE_PRICE = 20
+export const MAX_FREEZES = 2
+
+export const AVATARS = ['🧒', '👦', '👧', '👩', '👨', '👵', '👴', '🧑', '🦸', '🧙']

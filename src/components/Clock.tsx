@@ -10,7 +10,7 @@ export function Clock({ hour, minute = 0, size = 220 }: { hour: number; minute?:
         const x = Math.sin(a) * 78
         const y = -Math.cos(a) * 78
         return (
-          <text key={i} x={x} y={y + 8} textAnchor="middle" fontSize={22} fontWeight={700} fill="#333" fontFamily="Fredoka, sans-serif">
+          <text key={i} x={x} y={y + 8} textAnchor="middle" fontSize={22} fontWeight={700} fill="#333" fontFamily="Nunito, sans-serif">
             {i + 1}
           </text>
         )

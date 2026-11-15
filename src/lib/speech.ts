@@ -72,15 +72,35 @@ export function setSpeechEnabled(on: boolean) {
   enabled = on
   if (!on) stopSpeech()
 }
+export function speechEnabled() {
+  return enabled
+}
+
+/** True when the device has at least one voice for this language. */
+export function hasVoice(lang: Lang) {
+  return voicesFor(lang).length > 0
+}
+
+// Every interrupting speak() and every stopSpeech() starts a new generation.
+// Anything awaited from an older generation is considered cancelled.
+let generation = 0
+export function speechGeneration() {
+  return generation
+}
 
 export function stopSpeech() {
+  generation++
   if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel()
 }
 
-export function speak(text: string, lang: Lang = 'de', opts: { rate?: number; interrupt?: boolean } = {}): Promise<void> {
+/** Resolves true when the phrase was spoken to the end, false when it was cancelled or skipped. */
+export function speak(text: string, lang: Lang = 'de', opts: { rate?: number; interrupt?: boolean } = {}): Promise<boolean> {
+  if (opts.interrupt !== false) stopSpeech()
+  const myGen = generation
   return new Promise((resolve) => {
-    if (!enabled || typeof speechSynthesis === 'undefined' || !text) return resolve()
-    if (opts.interrupt !== false) speechSynthesis.cancel()
+    if (!enabled || typeof speechSynthesis === 'undefined' || !text) return resolve(false)
+    // No Italian voice on this device → a German voice would read Italian badly. Skip.
+    if (lang !== 'de' && allVoices().length > 0 && !hasVoice(lang)) return resolve(false)
     const u = new SpeechSynthesisUtterance(text)
     u.lang = LANG_TAG[lang]
     const v = pickVoice(lang)
@@ -91,32 +111,40 @@ export function speak(text: string, lang: Lang = 'de', opts: { rate?: number; in
     const finish = () => {
       if (done) return
       done = true
-      resolve()
+      resolve(generation === myGen)
     }
     u.onend = finish
     u.onerror = finish
     // Chrome drops utterances queued synchronously after cancel(); defer a tick.
-    setTimeout(() => speechSynthesis.speak(u), 0)
+    setTimeout(() => {
+      if (generation !== myGen) return finish()
+      speechSynthesis.speak(u)
+    }, 0)
     // Safety: resolve even if onend never fires (Safari quirk)
     setTimeout(finish, Math.max(2000, text.length * 130))
   })
 }
 
-/** Speak German, then Italian if bilingual mode is on. */
-export async function speakBoth(de: string, it: string | undefined, bilingual: boolean) {
-  await speak(de, 'de')
+/** Speak German, then Italian if bilingual mode is on. Resolves false if cancelled. */
+export async function speakBoth(de: string, it: string | undefined, bilingual: boolean): Promise<boolean> {
+  const myGen = generation + 1
+  const ok = await speak(de, 'de')
+  if (!ok && generation !== myGen) return false
   if (bilingual && it) {
     await new Promise((r) => setTimeout(r, 250))
-    await speak(it, 'it', { interrupt: false })
+    if (generation !== myGen) return false
+    return speak(it, 'it', { interrupt: false })
   }
+  return ok
 }
 
 const praiseDe = ['Super!', 'Toll gemacht!', 'Richtig!', 'Klasse!', 'Prima!', 'Genau!', 'Wunderbar!', 'Spitze!']
 const praiseIt = ['Bravo!', 'Perfetto!', 'Giusto!', 'Benissimo!', 'Ottimo!']
+const comboDe: Record<number, string> = { 3: 'Drei richtig in Folge!', 5: 'Wahnsinn! Fünf in Folge!', 8: 'Unglaublich! Acht in Folge!' }
 const retryDe = ['Fast! Versuch es nochmal.', 'Nicht ganz. Probier es noch einmal.', 'Hmm, schau nochmal genau hin.']
 
-export function praise(bilingual: boolean) {
-  const de = praiseDe[Math.floor(Math.random() * praiseDe.length)]
+export function praise(bilingual: boolean, combo = 0) {
+  const de = comboDe[combo] ?? praiseDe[Math.floor(Math.random() * praiseDe.length)]
   const it = praiseIt[Math.floor(Math.random() * praiseIt.length)]
   return { de, it, say: () => speakBoth(de, it, bilingual) }
 }

@@ -1,8 +1,8 @@
-import { useMemo } from 'react'
-import { ChoiceGame, type GameProps, type Round } from '../components/ChoiceGame'
+import type { Round } from '../components/ChoiceGame'
 import { Shape } from '../components/Shape'
 import { COLORS, SHAPES } from '../data/misc'
 import { pick, pickN, shuffle } from '../lib/util'
+import type { Builder } from './types'
 
 const ACC: Record<string, string> = { kreis: 'den', quadrat: 'das', dreieck: 'das', rechteck: 'das', stern: 'den', herz: 'das' }
 const IT_F = new Set(['stern'])
@@ -22,15 +22,15 @@ function itAdj(colorIt: string, fem: boolean) {
   return colorIt
 }
 
-export default function Formen({ level, bilingual, onFinish, onClose }: GameProps) {
-  const rounds = useMemo<Round[]>(() => {
-    return Array.from({ length: 6 }, (_, ri) => {
+export const build: Builder = (level, { count = 6 }) => {
+    return Array.from({ length: count }, (_, ri): Round => {
       const mode = level === 1 ? 'shape' : level === 2 ? 'both' : ri % 2 === 0 ? 'both' : 'color'
       if (mode === 'shape') {
         const shapes = pickN(SHAPES, 3)
         const target = shapes[0]
-        const colors = pickN(COLORS, 3)
-        const opts = shuffle(shapes.map((s, i) => ({ s, c: colors[i] })))
+        // level 1: one colour for all, so only the shape matters
+        const c = pick(COLORS.filter((x) => x.id !== 'gelb'))
+        const opts = shuffle(shapes.map((s) => ({ s, c })))
         return {
           promptDe: `Tippe auf ${ACC[target.id]} ${target.de}!`,
           promptIt: `Tocca ${IT_F.has(target.id) ? 'la' : 'il'} ${target.it}!`,
@@ -70,6 +70,4 @@ export default function Formen({ level, bilingual, onFinish, onClose }: GameProp
         columns: 2,
       }
     })
-  }, [level])
-  return <ChoiceGame rounds={rounds} bilingual={bilingual} onFinish={onFinish} onClose={onClose} />
 }

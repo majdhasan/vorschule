@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import confetti from 'canvas-confetti'
 import type { GameProps } from '../components/ChoiceGame'
 import { Mascot } from '../components/Mascot'
 import { LessonShell } from '../components/LessonShell'
 import { speak, speakBoth } from '../lib/speech'
+import { sfx } from '../lib/sfx'
 import { WORDS } from '../data/words'
 import { pickN, shuffle } from '../lib/util'
 
@@ -19,73 +20,79 @@ export default function Memory({ level, bilingual, onFinish, onClose }: GameProp
   const [open, setOpen] = useState<number[]>([])
   const [moves, setMoves] = useState(0)
   const [lock, setLock] = useState(false)
+  const [done, setDone] = useState(false)
+  const timers = useRef<number[]>([])
 
   useEffect(() => {
-    const t = setTimeout(() => speakBoth('Finde die Paare! Welche zwei Bilder sind gleich?', 'Trova le coppie!', bilingual), 300)
-    return () => clearTimeout(t)
+    const t = window.setTimeout(() => speakBoth('Finde die Paare! Welche zwei Bilder sind gleich?', 'Trova le coppie!', bilingual), 300)
+    timers.current.push(t)
+    const list = timers.current
+    return () => list.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const later = (fn: () => void, ms: number) => timers.current.push(window.setTimeout(fn, ms))
+
   const flip = (i: number) => {
-    if (lock || cards[i].flipped || cards[i].matched || open.length === 2) return
+    if (lock || done || cards[i].flipped || cards[i].matched || open.length === 2) return
+    sfx.tap()
     const next = cards.map((c, k) => (k === i ? { ...c, flipped: true } : c))
     setCards(next)
     const w = cards[i].word
     speakBoth(w.de, w.it, bilingual)
     const o = [...open, i]
     setOpen(o)
-    if (o.length === 2) {
-      setMoves((m) => m + 1)
-      const [a, b] = o
-      if (next[a].word.de === next[b].word.de) {
-        const matched = next.map((c, k) => (k === a || k === b ? { ...c, matched: true } : c))
-        setCards(matched)
-        setOpen([])
-        confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 } })
-        if (matched.every((c) => c.matched)) {
-          const totalMoves = moves + 1
-          const ratio = Math.min(1, (pairs * 1.6) / totalMoves)
-          const hearts = totalMoves <= pairs * 1.6 ? 3 : totalMoves <= pairs * 2.2 ? 2 : 1
-          speak('Alle Paare gefunden! Super!', 'de')
-          setTimeout(() => onFinish(Math.round(ratio * 10), 10, hearts), 1500)
-        }
-      } else {
-        setLock(true)
-        setTimeout(() => {
-          setCards((cs) => cs.map((c, k) => (k === a || k === b ? { ...c, flipped: false } : c)))
-          setOpen([])
-          setLock(false)
-        }, 1100)
+    if (o.length < 2) return
+    const totalMoves = moves + 1
+    setMoves(totalMoves)
+    const [a, b] = o
+    if (next[a].word.de === next[b].word.de) {
+      const matched = next.map((c, k) => (k === a || k === b ? { ...c, matched: true } : c))
+      setCards(matched)
+      setOpen([])
+      sfx.correct()
+      confetti({ particleCount: 30, spread: 50, origin: { y: 0.6 }, disableForReducedMotion: true })
+      if (matched.every((c) => c.matched)) {
+        setDone(true)
+        // generous: up to 2.5 moves per pair still counts as perfect
+        const ratio = Math.min(1, (pairs * 2.5) / totalMoves)
+        speak('Alle Paare gefunden! Super!', 'de')
+        later(() => onFinish({ correct: Math.round(ratio * 10), total: 10, hearts: 3, maxCombo: 0, missed: [], fixed: [] }), 1500)
       }
+    } else {
+      setLock(true)
+      later(() => {
+        setCards((cs) => cs.map((c, k) => (k === a || k === b ? { ...c, flipped: false } : c)))
+        setOpen([])
+        setLock(false)
+      }, 1600)
     }
   }
 
-  const cols = 4
   const matchedPairs = cards.filter((c) => c.matched).length / 2
-  const heartsNow = moves <= pairs * 1.6 ? 3 : moves <= pairs * 2.2 ? 2 : 1
   return (
-    <LessonShell progress={matchedPairs / pairs} hearts={heartsNow} onClose={onClose}>
+    <LessonShell progress={matchedPairs / pairs} onClose={onClose}>
       <div className="q">
-      <div className="q-head">
-        <Mascot size={56} />
-        <div className="bubble static">
-          <div className="bubble-de">Finde die Paare!</div>
-          {bilingual && <div className="bubble-it">Trova le coppie!</div>}
-          <div className="bubble-meta">Züge: {moves}</div>
-        </div>
-      </div>
-      <div className="memory" style={{ gridTemplateColumns: `repeat(${cols}, 1fr)` }}>
-        {cards.map((c, i) => (
-          <button
-            key={c.id}
-            className={'card' + (c.flipped || c.matched ? ' open' : '') + (c.matched ? ' matched' : '')}
-            onClick={() => flip(i)}
-            aria-label={c.flipped ? c.word.de : 'Karte'}
-          >
-            <span className="card-front">❓</span>
-            <span className="card-back">{c.word.emoji}</span>
+        <div className="q-head">
+          <Mascot mood={done ? 'cheer' : 'normal'} size={56} />
+          <button className="bubble" onClick={() => speakBoth('Finde die Paare!', 'Trova le coppie!', bilingual)}>
+            <div className="bubble-de">Finde die Paare!</div>
+            {bilingual && <div className="bubble-it">Trova le coppie!</div>}
+            <span className="bubble-speaker">🔊</span>
           </button>
-        ))}
-      </div>
+        </div>
+        <div className="memory" style={{ gridTemplateColumns: `repeat(4, 1fr)` }}>
+          {cards.map((c, i) => (
+            <button
+              key={c.id}
+              className={'card' + (c.flipped || c.matched ? ' open' : '') + (c.matched ? ' matched' : '')}
+              onClick={() => flip(i)}
+              aria-label={c.flipped || c.matched ? c.word.de : 'Karte'}
+            >
+              <span className="card-front">❓</span>
+              <span className="card-back">{c.word.emoji}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </LessonShell>
   )
