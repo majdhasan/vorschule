@@ -136,7 +136,8 @@ h1, h2, h3 { margin: 0; font-weight: 800; }
 .node.chest, .node.review { border-radius: 24px; }
 .node.chest.done .node-icon { filter: grayscale(0.6); opacity: 0.6; }
 .node.current { animation: breathe 1.6s ease-in-out infinite; }
-.node.current::before { content: ''; position: absolute; inset: -12px; border-radius: inherit; border: 4px dashed var(--c); opacity: 0.55; animation: spin 12s linear infinite; }
+/* centred on the whole button incl. its 8px 3D lip (face 76 + lip 8 → centre 4px below the face centre), still a 106px circle */
+.node.current::before { content: ''; position: absolute; inset: -11px -15px -19px; border-radius: 50%; border: 4px dashed var(--c); opacity: 0.55; animation: spin 12s linear infinite; }
 .node.chest.current::before, .node.review.current::before { border-radius: 30px; animation: pulse 1.6s ease-in-out infinite; }
 .node.legendary { background: linear-gradient(135deg, #ffd900, #ffb100); box-shadow: 0 8px 0 #d99a00; }
 .node-ring { position: absolute; inset: -8px; border-radius: 50%; z-index: 0; -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px)); mask: radial-gradient(farthest-side, transparent calc(100% - 7px), #000 calc(100% - 6px)); }
