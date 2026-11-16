@@ -18,7 +18,7 @@ export default defineConfig({
         scope: base,
         name: 'Berli – Vorschule',
         short_name: 'Berli',
-        description: 'Spielerisch fit für die Schule – Deutsch & Italienisch',
+        description: 'Spielerisch fit für die Schule – auf Deutsch oder Italienisch',
         lang: 'de',
         theme_color: '#58CC02',
         background_color: '#ffffff',

@@ -3,14 +3,16 @@ import confetti from 'canvas-confetti'
 import type { GameProps } from '../components/ChoiceGame'
 import { Mascot } from '../components/Mascot'
 import { LessonShell } from '../components/LessonShell'
-import { speak, speakBoth } from '../lib/speech'
+import { speak } from '../lib/speech'
+import { t } from '../lib/i18n'
+import { wordOf } from './types'
 import { sfx } from '../lib/sfx'
 import { WORDS } from '../data/words'
 import { pickN, shuffle } from '../lib/util'
 
 type Card = { id: number; word: (typeof WORDS)[number]; flipped: boolean; matched: boolean }
 
-export default function Memory({ level, bilingual, onFinish, onClose }: GameProps) {
+export default function Memory({ level, onFinish, onClose }: GameProps) {
   const pairs = level === 1 ? 4 : level === 2 ? 6 : 8
   const cards0 = useMemo<Card[]>(() => {
     const ws = pickN(WORDS, pairs)
@@ -24,8 +26,8 @@ export default function Memory({ level, bilingual, onFinish, onClose }: GameProp
   const timers = useRef<number[]>([])
 
   useEffect(() => {
-    const t = window.setTimeout(() => speakBoth('Finde die Paare! Welche zwei Bilder sind gleich?', 'Trova le coppie!', bilingual), 300)
-    timers.current.push(t)
+    const tm = window.setTimeout(() => speak(t('Finde die Paare! Welche zwei Bilder sind gleich?', 'Trova le coppie! Quali due immagini sono uguali?')), 300)
+    timers.current.push(tm)
     const list = timers.current
     return () => list.forEach(clearTimeout)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -38,7 +40,7 @@ export default function Memory({ level, bilingual, onFinish, onClose }: GameProp
     const next = cards.map((c, k) => (k === i ? { ...c, flipped: true } : c))
     setCards(next)
     const w = cards[i].word
-    speakBoth(w.de, w.it, bilingual)
+    speak(wordOf(w))
     const o = [...open, i]
     setOpen(o)
     if (o.length < 2) return
@@ -55,7 +57,7 @@ export default function Memory({ level, bilingual, onFinish, onClose }: GameProp
         setDone(true)
         // generous: up to 2.5 moves per pair still counts as perfect
         const ratio = Math.min(1, (pairs * 2.5) / totalMoves)
-        speak('Alle Paare gefunden! Super!', 'de')
+        speak(t('Alle Paare gefunden! Super!', 'Hai trovato tutte le coppie! Bravo!'))
         later(() => onFinish({ correct: Math.round(ratio * 10), total: 10, hearts: 3, maxCombo: 0, missed: [], fixed: [] }), 1500)
       }
     } else {
@@ -74,9 +76,8 @@ export default function Memory({ level, bilingual, onFinish, onClose }: GameProp
       <div className="q">
         <div className="q-head">
           <Mascot mood={done ? 'cheer' : 'normal'} size={56} />
-          <button className="bubble" onClick={() => speakBoth('Finde die Paare!', 'Trova le coppie!', bilingual)}>
-            <div className="bubble-de">Finde die Paare!</div>
-            {bilingual && <div className="bubble-it">Trova le coppie!</div>}
+          <button className="bubble" onClick={() => speak(t('Finde die Paare!', 'Trova le coppie!'))}>
+            <div className="bubble-de">{t('Finde die Paare!', 'Trova le coppie!')}</div>
             <span className="bubble-speaker">🔊</span>
           </button>
         </div>
@@ -86,7 +87,7 @@ export default function Memory({ level, bilingual, onFinish, onClose }: GameProp
               key={c.id}
               className={'card' + (c.flipped || c.matched ? ' open' : '') + (c.matched ? ' matched' : '')}
               onClick={() => flip(i)}
-              aria-label={c.flipped || c.matched ? c.word.de : 'Karte'}
+              aria-label={c.flipped || c.matched ? wordOf(c.word) : t('Karte', 'Carta')}
             >
               <span className="card-front">❓</span>
               <span className="card-back">{c.word.emoji}</span>

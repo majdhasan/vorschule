@@ -3,6 +3,7 @@ import { Shape } from '../components/Shape'
 import { COLORS, SHAPES } from '../data/misc'
 import { pick, pickN, shuffle } from '../lib/util'
 import type { Builder } from './types'
+import { getLang } from '../lib/i18n'
 
 const ACC: Record<string, string> = { kreis: 'den', quadrat: 'das', dreieck: 'das', rechteck: 'das', stern: 'den', herz: 'das' }
 const IT_F = new Set(['stern'])
@@ -23,6 +24,8 @@ function itAdj(colorIt: string, fem: boolean) {
 }
 
 export const build: Builder = (level, { count = 6 }) => {
+    const it = getLang() === 'it'
+    const the = (id: string) => (IT_F.has(id) ? 'la' : 'il')
     return Array.from({ length: count }, (_, ri): Round => {
       const mode = level === 1 ? 'shape' : level === 2 ? 'both' : ri % 2 === 0 ? 'both' : 'color'
       if (mode === 'shape') {
@@ -32,9 +35,8 @@ export const build: Builder = (level, { count = 6 }) => {
         const c = pick(COLORS.filter((x) => x.id !== 'gelb'))
         const opts = shuffle(shapes.map((s) => ({ s, c })))
         return {
-          promptDe: `Tippe auf ${ACC[target.id]} ${target.de}!`,
-          promptIt: `Tocca ${IT_F.has(target.id) ? 'la' : 'il'} ${target.it}!`,
-          options: opts.map((o) => ({ key: o.s.id, node: <Shape shape={o.s.id} color={o.c.hex} />, sayDe: o.s.de, sayIt: o.s.it })),
+          prompt: it ? `Tocca ${the(target.id)} ${target.it}!` : `Tippe auf ${ACC[target.id]} ${target.de}!`,
+          options: opts.map((o) => ({ key: o.s.id, node: <Shape shape={o.s.id} color={o.c.hex} />, say: it ? o.s.it : o.s.de })),
           answer: target.id,
           columns: 3,
         }
@@ -44,10 +46,9 @@ export const build: Builder = (level, { count = 6 }) => {
         const colors = pickN(COLORS, 4)
         const target = colors[0]
         return {
-          promptDe: `Welche Farbe hat ${ACC[shape.id] === 'den' ? 'der' : 'das'} ${shape.de}?`,
-          promptIt: `Di che colore è ${IT_F.has(shape.id) ? 'la' : 'il'} ${shape.it}?`,
+          prompt: it ? `Di che colore è ${the(shape.id)} ${shape.it}?` : `Welche Farbe hat ${ACC[shape.id] === 'den' ? 'der' : 'das'} ${shape.de}?`,
           visual: <Shape shape={shape.id} color={target.hex} size={140} />,
-          options: shuffle(colors).map((c) => ({ key: c.id, node: <span className="swatch" style={{ background: c.hex }} />, sayDe: c.de, sayIt: c.it })),
+          options: shuffle(colors).map((c) => ({ key: c.id, node: <span className="swatch" style={{ background: c.hex }} />, say: it ? c.it : c.de })),
           answer: target.id,
           columns: 4,
         }
@@ -63,9 +64,12 @@ export const build: Builder = (level, { count = 6 }) => {
       ])
       const art = ACC[s1.id]
       return {
-        promptDe: `Tippe auf ${art} ${deAdj(c1.de, art)} ${s1.de}!`,
-        promptIt: `Tocca ${IT_F.has(s1.id) ? 'la' : 'il'} ${s1.it} ${itAdj(c1.it, IT_F.has(s1.id))}!`,
-        options: items.map((o) => ({ key: o.key, node: <Shape shape={o.s.id} color={o.c.hex} />, sayDe: `${deAdjStrong(o.c.de, o.s.id)} ${o.s.de}`, sayIt: `${o.s.it} ${itAdj(o.c.it, IT_F.has(o.s.id))}` })),
+        prompt: it ? `Tocca ${the(s1.id)} ${s1.it} ${itAdj(c1.it, IT_F.has(s1.id))}!` : `Tippe auf ${art} ${deAdj(c1.de, art)} ${s1.de}!`,
+        options: items.map((o) => ({
+          key: o.key,
+          node: <Shape shape={o.s.id} color={o.c.hex} />,
+          say: it ? `${o.s.it} ${itAdj(o.c.it, IT_F.has(o.s.id))}` : `${deAdjStrong(o.c.de, o.s.id)} ${o.s.de}`,
+        })),
         answer: 'target',
         columns: 2,
       }

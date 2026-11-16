@@ -34,10 +34,10 @@ export const WEEKDAYS = [
 ]
 
 export const SEASONS = [
-  { de: 'Frühling', it: 'primavera', emoji: '🌷', hint: 'Blumen blühen, die Vögel singen.' },
-  { de: 'Sommer', it: 'estate', emoji: '☀️', hint: 'Es ist heiß, wir gehen ins Freibad.' },
-  { de: 'Herbst', it: 'autunno', emoji: '🍂', hint: 'Die Blätter fallen, wir sammeln Kastanien.' },
-  { de: 'Winter', it: 'inverno', emoji: '⛄', hint: 'Es schneit und wir bauen einen Schneemann.' },
+  { de: 'Frühling', it: 'primavera', emoji: '🌷', hint: 'Blumen blühen, die Vögel singen.', hintIt: 'Sbocciano i fiori e cantano gli uccellini.' },
+  { de: 'Sommer', it: 'estate', emoji: '☀️', hint: 'Es ist heiß, wir gehen ins Freibad.', hintIt: 'Fa caldo e andiamo in piscina.' },
+  { de: 'Herbst', it: 'autunno', emoji: '🍂', hint: 'Die Blätter fallen, wir sammeln Kastanien.', hintIt: 'Cadono le foglie e raccogliamo le castagne.' },
+  { de: 'Winter', it: 'inverno', emoji: '⛄', hint: 'Es schneit und wir bauen einen Schneemann.', hintIt: 'Nevica e facciamo un pupazzo di neve.' },
 ]
 
 // ---------- stickers: themed sets, some rare ----------
@@ -46,7 +46,7 @@ export const STICKER_SETS = [
   { id: 'berlin', de: 'Berlin', it: 'Berlino', emoji: '🐻' },
   { id: 'tiere', de: 'Tiere', it: 'Animali', emoji: '🦁' },
   { id: 'weltall', de: 'Weltall', it: 'Spazio', emoji: '🚀' },
-  { id: 'italia', de: 'Italia', it: 'Italia', emoji: '🇮🇹' },
+  { id: 'italia', de: 'Italien', it: 'Italia', emoji: '🇮🇹' },
   { id: 'schule', de: 'Schule', it: 'Scuola', emoji: '🎒' },
 ] as const
 
@@ -96,19 +96,19 @@ export const SET_BONUS_GEMS = 20
 
 // ---------- shop ----------
 export const OUTFITS = [
-  { id: '', emoji: '', de: 'Ohne', price: 0 },
-  { id: 'kappe', emoji: '🧢', de: 'Kappe', price: 20 },
-  { id: 'schleife', emoji: '🎀', de: 'Schleife', price: 20 },
-  { id: 'brille', emoji: '🕶️', de: 'Sonnenbrille', price: 30 },
-  { id: 'zylinder', emoji: '🎩', de: 'Zylinder', price: 30 },
-  { id: 'doktorhut', emoji: '🎓', de: 'Doktorhut', price: 40 },
-  { id: 'krone', emoji: '👑', de: 'Krone', price: 60 },
+  { id: '', emoji: '', de: 'Ohne', it: 'Niente', price: 0 },
+  { id: 'kappe', emoji: '🧢', de: 'Kappe', it: 'Cappellino', price: 20 },
+  { id: 'schleife', emoji: '🎀', de: 'Schleife', it: 'Fiocco', price: 20 },
+  { id: 'brille', emoji: '🕶️', de: 'Sonnenbrille', it: 'Occhiali da sole', price: 30 },
+  { id: 'zylinder', emoji: '🎩', de: 'Zylinder', it: 'Cilindro', price: 30 },
+  { id: 'doktorhut', emoji: '🎓', de: 'Doktorhut', it: 'Tocco', price: 40 },
+  { id: 'krone', emoji: '👑', de: 'Krone', it: 'Corona', price: 60 },
 ]
 export const THEMES = [
-  { id: '', de: 'Standard', emoji: '🏞️', deco: [] as string[], price: 0 },
-  { id: 'wald', de: 'Wald', emoji: '🌲', deco: ['🌲', '🌳', '🍄', '🦔', '🌼'], price: 30 },
-  { id: 'meer', de: 'Meer', emoji: '🌊', deco: ['🐚', '🐠', '🌊', '🦀', '🐳'], price: 30 },
-  { id: 'weltall', de: 'Weltall', emoji: '🪐', deco: ['⭐', '🪐', '🌙', '✨', '☄️'], price: 40 },
+  { id: '', de: 'Standard', it: 'Classico', emoji: '🏞️', deco: [] as string[], price: 0 },
+  { id: 'wald', de: 'Wald', it: 'Bosco', emoji: '🌲', deco: ['🌲', '🌳', '🍄', '🦔', '🌼'], price: 30 },
+  { id: 'meer', de: 'Meer', it: 'Mare', emoji: '🌊', deco: ['🐚', '🐠', '🌊', '🦀', '🐳'], price: 30 },
+  { id: 'weltall', de: 'Weltall', it: 'Spazio', emoji: '🪐', deco: ['⭐', '🪐', '🌙', '✨', '☄️'], price: 40 },
 ]
 export const STICKER_PACK_PRICE = 15
 export const FREEZE_PRICE = 20

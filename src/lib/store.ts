@@ -5,6 +5,7 @@ import { emptyDaily, questProgress, questsFor, QUEST_REWARD_GEMS, type Daily } f
 import { ACHIEVEMENTS, MEDAL_GEMS, tierOf, type AchStats } from '../data/achievements'
 import { FREEZE_PRICE, MAX_FREEZES, OUTFITS, SET_BONUS_GEMS, STICKER_PACK_PRICE, STICKER_SETS, STICKERS, THEMES } from '../data/misc'
 import { addDays, daysBetween, todayKey, weekKey } from './util'
+import { t, type Lang } from './i18n'
 
 export type GameStats = {
   level: number // 1..3 – practice difficulty, adapts in free practice
@@ -70,7 +71,8 @@ export type Reward = { xp: number; gems: number; stickers: string[]; setsComplet
 type Data = {
   childName: string
   childAvatar: string
-  bilingual: boolean
+  /** the one language the whole app runs in (parent's choice) */
+  lang: Lang
   sound: boolean
   voiceDe: string
   voiceIt: string
@@ -110,7 +112,7 @@ type Data = {
 export type State = Data & {
   setName: (n: string) => void
   setChildAvatar: (a: string) => void
-  setBilingual: (b: boolean) => void
+  setLang: (l: Lang) => void
   setSound: (b: boolean) => void
   setVoice: (lang: 'de' | 'it', name: string) => void
   setParentUnlocked: (b: boolean) => void
@@ -135,7 +137,7 @@ const emptyNode = (): NodeProgress => ({ stars: 0, acc: 0, done: false, plays: 0
 const initial: Data = {
   childName: '',
   childAvatar: '🧒',
-  bilingual: true,
+  lang: 'de',
   sound: true,
   voiceDe: '',
   voiceIt: '',
@@ -223,7 +225,7 @@ export function achStats(s: Data): AchStats {
     crowns: prog.reduce((a, n) => a + (n.crowns ?? 0), 0),
     legendary: prog.filter((n) => n.crowns >= 3).length,
     chests: Object.entries(s.nodes).filter(([id, n]) => id.startsWith('chest-') && n.done).length,
-    italiano: s.games.italienisch?.plays ?? 0,
+    spuren: s.games.spuren?.plays ?? 0,
     stickers: s.stickers.length,
   }
 }
@@ -276,7 +278,7 @@ export const useStore = create<State>()(
       ...initial,
       setName: (childName) => set({ childName }),
       setChildAvatar: (childAvatar) => set({ childAvatar }),
-      setBilingual: (bilingual) => set({ bilingual }),
+      setLang: (lang) => set({ lang }),
       setSound: (sound) => set({ sound }),
       setVoice: (lang, name) => set(lang === 'de' ? { voiceDe: name } : { voiceIt: name }),
       setParentUnlocked: (parentUnlocked) => set({ parentUnlocked }),
@@ -329,22 +331,22 @@ export const useStore = create<State>()(
               nodeDone = true
               unitPassed = isReview
             }
-            lines.push({ label: isReview ? 'Prüfung' : 'Lektion', xp: isReview ? 15 : 10 })
+            lines.push({ label: isReview ? t('Prüfung', 'Verifica') : t('Lektion', 'Lezione'), xp: isReview ? 15 : 10 })
           } else if (stars >= 2 && prev.crowns < 3 && p.level === nodePlayLevel(nodeEntry.node, prev)) {
             next.crowns = prev.crowns + 1
             crownUp = true
-            lines.push({ label: `Krone ${next.crowns}`, xp: 10 })
+            lines.push({ label: `${t('Krone', 'Corona')} ${next.crowns}`, xp: 10 })
           } else {
-            lines.push({ label: 'Wiederholung', xp: 5 })
+            lines.push({ label: t('Wiederholung', 'Ripasso'), xp: 5 })
           }
           crowns = next.crowns
           nodes[p.nodeId] = next
         } else if (p.kind === 'mistakes') {
-          lines.push({ label: 'Fehler geübt', xp: 10 })
+          lines.push({ label: t('Fehler geübt', 'Errori ripassati'), xp: 10 })
         } else {
-          lines.push({ label: 'Übung', xp: 8 })
+          lines.push({ label: t('Übung', 'Esercizio'), xp: 8 })
         }
-        if (perfect) lines.push({ label: 'Perfekt-Bonus', xp: 5 })
+        if (perfect) lines.push({ label: t('Perfekt-Bonus', 'Bonus perfetto'), xp: 5 })
         if (p.maxCombo >= 5) lines.push({ label: `Combo ×${p.maxCombo}`, xp: 3 })
         else if (p.maxCombo >= 3) lines.push({ label: `Combo ×${p.maxCombo}`, xp: 1 })
         const xp = lines.reduce((a, l) => a + l.xp, 0)
@@ -488,11 +490,12 @@ export const useStore = create<State>()(
       addMember: (name, avatar) => set((s) => ({ members: [...s.members, { id: String(Date.now()), name, avatar, weekXp: 0 }].slice(0, 3) })),
       removeMember: (id) => set((s) => ({ members: s.members.filter((m) => m.id !== id), activeMember: s.activeMember === id ? '' : s.activeMember })),
       setActiveMember: (activeMember) => set({ activeMember }),
-      reset: () => set({ ...initial, daily: emptyDaily(todayKey()), weekKey: weekKey() }),
+      // keeps the parent's language and voice choice
+      reset: () => set((s) => ({ ...initial, lang: s.lang, voiceDe: s.voiceDe, voiceIt: s.voiceIt, daily: emptyDaily(todayKey()), weekKey: weekKey() })),
     }),
     {
       name: 'berli-vorschule-v1',
-      version: 3,
+      version: 4,
       migrate: (persisted: unknown, version: number) => {
         const p = (persisted ?? {}) as Record<string, unknown>
         let xp = typeof p.xp === 'number' ? p.xp : 0
@@ -531,7 +534,10 @@ export const useStore = create<State>()(
           lessonsTotal: (p.lessonsTotal as number) ?? Object.values(games).reduce((a, g) => a + g.plays, 0),
           lessonDays: (p.lessonDays as string[]) ?? (openedOnly ? (streak > 0 ? [addDays(today, -1)] : []) : lastDay ? [lastDay] : []),
           weekKey: (p.weekKey as string) ?? weekKey(),
+          // v4: one language instead of German + Italian side by side
+          lang: p.lang === 'it' ? 'it' : 'de',
         }
+        delete (migrated as Partial<Data> & { bilingual?: boolean }).bilingual
         return migrated as State
       },
     },

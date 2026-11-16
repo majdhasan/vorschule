@@ -9,6 +9,7 @@ import { findNode, lessonsOf, unitById } from '../data/path'
 import { streakInfo, todaysQuests, useStore, type LessonResult, type Src } from '../lib/store'
 import { stopSpeech } from '../lib/speech'
 import { shuffle, todayKey } from '../lib/util'
+import { t } from '../lib/i18n'
 
 export type Launch =
   | { kind: 'node'; nodeId: string; gameId: string; level: number }
@@ -53,7 +54,7 @@ function build(launch: Launch, ctx: BuildCtx, mistakes: Src[]): Built {
 
 export function GameScreen({ launch, onHome }: { launch: Launch; onHome: () => void }) {
   const s = useStore()
-  const [built] = useState(() => build(launch, { bilingual: s.bilingual, childName: s.childName }, s.mistakes))
+  const [built] = useState(() => build(launch, { childName: s.childName }, s.mistakes))
   const [step, setStep] = useState<'play' | 'end' | 'streak' | 'rewards'>('play')
   const [result, setResult] = useState<LessonResult | null>(null)
 
@@ -88,9 +89,9 @@ export function GameScreen({ launch, onHome }: { launch: Launch; onHome: () => v
 
   if (step === 'end' && result) {
     const g = GAMES.find((x) => x.id === built.gameId)
-    const levelUpText = g && result.levelUp ? `⬆️ ${g.emoji} ${g.title}: neue Stufe ${'⭐'.repeat(s.games[g.id]?.level ?? 1)}` : undefined
+    const levelUpText = g && result.levelUp ? `⬆️ ${g.emoji} ${t(g.title, g.titleIt)}: ${t('neue Stufe', 'nuovo livello')} ${'⭐'.repeat(s.games[g.id]?.level ?? 1)}` : undefined
     const member = s.members.find((m) => m.id === s.activeMember)
-    return <EndScreen result={result} bilingual={s.bilingual} levelUpText={levelUpText} playerName={member?.name} onNext={() => afterEnd(result)} />
+    return <EndScreen result={result} levelUpText={levelUpText} playerName={member?.name} onNext={() => afterEnd(result)} />
   }
   if (step === 'streak' && result) {
     return (
@@ -108,8 +109,8 @@ export function GameScreen({ launch, onHome }: { launch: Launch; onHome: () => v
   if (step === 'rewards' && result) return <RewardsScreen result={result} onNext={close} />
 
   if (built.rounds) {
-    return <ChoiceGame rounds={built.rounds} bilingual={s.bilingual} onFinish={onFinish} onClose={close} listenOnly={launch.kind === 'practice' && launch.listen} />
+    return <ChoiceGame rounds={built.rounds} onFinish={onFinish} onClose={close} listenOnly={launch.kind === 'practice' && launch.listen} />
   }
   const C = built.Component!
-  return <C level={built.level} bilingual={s.bilingual} childName={s.childName} onFinish={onFinish} onClose={close} />
+  return <C level={built.level} childName={s.childName} onFinish={onFinish} onClose={close} />
 }

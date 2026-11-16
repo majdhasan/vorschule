@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react'
 import confetti from 'canvas-confetti'
-import { speakBoth } from '../lib/speech'
+import { speak } from '../lib/speech'
+import { t, tr } from '../lib/i18n'
 import { sfx } from '../lib/sfx'
 import type { LessonResult } from '../lib/store'
 import { useTapGuard } from '../hooks/useTapGuard'
 import { Mascot } from './Mascot'
 
-type Props = { result: LessonResult; bilingual: boolean; levelUpText?: string; playerName?: string; onNext: () => void }
+type Props = { result: LessonResult; levelUpText?: string; playerName?: string; onNext: () => void }
 
-const STAR_WORD = ['Keine Sterne', 'Ein Stern', 'Zwei Sterne', 'Drei Sterne']
+const STAR_WORD = {
+  de: ['Keine Sterne', 'Ein Stern', 'Zwei Sterne', 'Drei Sterne'],
+  it: ['Nessuna stella', 'Una stella', 'Due stelle', 'Tre stelle'],
+}
 
 /** Duolingo-style sequence: title → XP counts up → bonus chips → stars → notes → pulsing Weiter. */
-export function EndScreen({ result, bilingual, levelUpText, playerName, onNext }: Props) {
+export function EndScreen({ result, levelUpText, playerName, onNext }: Props) {
   const [step, setStep] = useState(0)
   const [shownXp, setShownXp] = useState(0)
   const guard = useTapGuard(step >= 4, 400)
@@ -43,34 +47,32 @@ export function EndScreen({ result, bilingual, levelUpText, playerName, onNext }
   // step 2: chips pop in, step 3: stars, step 4: notes + button
   useEffect(() => {
     if (step === 2) {
-      const t = setTimeout(() => setStep(3), 250 + result.lines.length * 220)
-      return () => clearTimeout(t)
+      const tm = setTimeout(() => setStep(3), 250 + result.lines.length * 220)
+      return () => clearTimeout(tm)
     }
     if (step === 3) {
       for (let i = 0; i < stars; i++) setTimeout(() => sfx.tap(), 180 + i * 260)
-      const de = `${STAR_WORD[stars]}! ${perfect ? 'Alles richtig!' : stars >= 1 ? 'Lektion geschafft!' : 'Das üben wir nochmal.'}`
-      const it = perfect ? 'Perfetto!' : stars >= 1 ? 'Lezione completata!' : 'Riproviamo!'
-      void speakBoth(de, it, bilingual)
-      const t = setTimeout(() => setStep(4), 300 + stars * 260)
-      return () => clearTimeout(t)
+      const msg = perfect ? t('Alles richtig!', 'Tutto giusto!') : stars >= 1 ? t('Lektion geschafft!', 'Lezione completata!') : t('Das üben wir nochmal.', 'La rifacciamo insieme.')
+      void speak(`${tr(STAR_WORD)[stars]}! ${msg}`)
+      const tm = setTimeout(() => setStep(4), 300 + stars * 260)
+      return () => clearTimeout(tm)
     }
   }, [step]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const notes: string[] = []
-  if (result.adult) notes.push(`⚡ ${xp} XP für ${playerName} in der Familien-Liga`)
-  if (result.unitPassed) notes.push('🏆 Einheit bestanden!')
-  else if (result.nodeDone) notes.push('🔓 Neue Lektion freigeschaltet!')
-  if (result.legendary) notes.push('🏅 Legendär! Höchste Stufe geschafft!')
-  else if (result.crownUp) notes.push(`👑 Krone ${result.crowns} geschafft!`)
+  if (result.adult) notes.push(t(`⚡ ${xp} XP für ${playerName} in der Familien-Liga`, `⚡ ${xp} XP per ${playerName} nella lega di famiglia`))
+  if (result.unitPassed) notes.push(t('🏆 Einheit bestanden!', '🏆 Unità superata!'))
+  else if (result.nodeDone) notes.push(t('🔓 Neue Lektion freigeschaltet!', '🔓 Nuova lezione sbloccata!'))
+  if (result.legendary) notes.push(t('🏅 Legendär! Höchste Stufe geschafft!', '🏅 Leggendario! Livello massimo raggiunto!'))
+  else if (result.crownUp) notes.push(t(`👑 Krone ${result.crowns} geschafft!`, `👑 Corona ${result.crowns} conquistata!`))
   if (result.levelUp && levelUpText) notes.push(levelUpText)
-  if (result.goalReached) notes.push('🎯 Tagesziel erreicht!')
+  if (result.goalReached) notes.push(t('🎯 Tagesziel erreicht!', '🎯 Obiettivo del giorno raggiunto!'))
 
   return (
     <div className="end">
       <div className="end-top">
         <Mascot mood={stars >= 1 ? 'cheer' : 'think'} size={104} />
-        <h1 className="end-title">{perfect ? 'Perfekt!' : stars >= 1 ? 'Lektion geschafft!' : 'Gut gekämpft!'}</h1>
-        {bilingual && <div className="end-sub">{perfect ? 'Perfetto!' : stars >= 1 ? 'Lezione completata!' : 'Ben fatto!'}</div>}
+        <h1 className="end-title">{perfect ? t('Perfekt!', 'Perfetto!') : stars >= 1 ? t('Lektion geschafft!', 'Lezione completata!') : t('Gut gekämpft!', 'Ben fatto!')}</h1>
       </div>
 
       <div className={'xp-card' + (step >= 1 ? ' in' : '')}>
@@ -92,7 +94,7 @@ export function EndScreen({ result, bilingual, levelUpText, playerName, onNext }
         )}
       </div>
 
-      <div className="big-stars" aria-label={STAR_WORD[stars]}>
+      <div className="big-stars" aria-label={tr(STAR_WORD)[stars]}>
         {[0, 1, 2].map((i) => (
           <span key={i} className={'big-star' + (step >= 3 && i < stars ? ' on' : '')} style={{ animationDelay: `${0.18 + i * 0.26}s` }}>
             ⭐
@@ -100,12 +102,12 @@ export function EndScreen({ result, bilingual, levelUpText, playerName, onNext }
         ))}
       </div>
 
-      {step >= 4 && perfect && !result.adult && <div className="end-hearts">❤️❤️❤️ Alle Herzen behalten!</div>}
+      {step >= 4 && perfect && !result.adult && <div className="end-hearts">❤️❤️❤️ {t('Alle Herzen behalten!', 'Nessun cuore perso!')}</div>}
       {step >= 4 && notes.map((n) => <div key={n} className="end-note">{n}</div>)}
 
       <footer className="lesson-foot">
         <button className={'btn green block' + (step >= 4 ? ' pulse' : '')} onClick={guard(() => (step >= 4 ? onNext() : setStep(4)))}>
-          Weiter ➜
+          {t('Weiter', 'Avanti')} ➜
         </button>
       </footer>
     </div>

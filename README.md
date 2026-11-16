@@ -1,6 +1,6 @@
 # Berli – Vorschule
 
-Spielerische Schulvorbereitung für ein 6-jähriges Kind in Berlin, zweisprachig Deutsch / Italienisch.
+Spielerische Schulvorbereitung für ein 6-jähriges Kind in Berlin, auf Deutsch oder Italienisch (Eltern wählen eine Sprache).
 Läuft als PWA im Browser (iPad, Android-Tablet, Laptop) – alles offline, keine Accounts, keine Werbung, kein Tracking.
 Fortschritt liegt nur im `localStorage` des Geräts.
 
@@ -17,8 +17,12 @@ Auf dem Tablet: Seite öffnen → „Zum Home-Bildschirm hinzufügen“. Danach 
 
 ## Was drin ist
 
-Berli, der Berliner Bär, spricht alle Aufgaben vor (Browser-Sprachausgabe, Deutsch und optional Italienisch),
-sodass das Kind noch nicht lesen können muss.
+Berli, der Berliner Bär, spricht alle Aufgaben vor (Browser-Sprachausgabe), sodass das Kind noch nicht lesen können muss.
+
+**Eine Sprache**: Beim ersten Start (und jederzeit im Elternbereich) wählen Eltern Deutsch oder Italiano. Dann läuft
+alles in dieser Sprache – Texte, Stimme und Spielinhalte: italienische Anlaute, Reime, Silben und Buchstabennamen,
+nur Buchstaben des italienischen Alphabets beim Nachspuren. Der Fortschritt bleibt beim Wechseln erhalten
+(`src/lib/i18n.ts`, `t(de, it)`).
 
 UI/UX nach Duolingo-Vorbild:
 
@@ -45,11 +49,10 @@ UI/UX nach Duolingo-Vorbild:
 | Sprache | Silben klatschen | Wörter in Silben gliedern |
 | Sprache | Buchstaben | Groß-/Kleinbuchstaben, Buchstaben des eigenen Namens |
 | Sprache | Nachspuren | Buchstaben & Zahlen in Schreibreihenfolge nachfahren: nummerierte Striche, Pfeile, 👀-Vorführung |
-| Sprache | Italiano | Italienischen Wortschatz hören und Bild finden |
 | Zahlen | Zählen | Mengen bis 20, mit Punktbildern |
 | Zahlen | Mehr oder weniger | Mengen vergleichen |
 | Zahlen | Plus und Minus | Rechnen bis 10 mit Punkten, Minus zum Wegstreichen |
-| Zahlen | Formen & Farben | Formen und Farben (de + it, mit korrekten Artikeln) |
+| Zahlen | Formen & Farben | Formen und Farben mit korrekten Artikeln und Endungen |
 | Zahlen | Uhrzeit | Volle Stunden |
 | Denken | Muster | Muster erkennen und fortsetzen |
 | Denken | Memory | Konzentration, Merkfähigkeit |
@@ -58,11 +61,11 @@ UI/UX nach Duolingo-Vorbild:
 | Welt | Schulweg & Schule | Ampel, Zebrastreifen, Schulranzen, Schulregeln |
 
 Jedes Spiel hat 3 Stufen. Im freien Üben gilt: zwei starke Runden hintereinander → eine Stufe höher, zwei schwache → eine
-Stufe zurück. Lautspiele sprechen Laute („mmm“), keine Buchstabennamen, und nie mit italienischer Stimme.
+Stufe zurück. Auf Deutsch sprechen Lautspiele Laute („mmm“), keine Buchstabennamen; auf Italienisch Buchstabennamen („emme“).
 
 ## Elternbereich
 
-Unten rechts auf „Eltern“, dann eine Malaufgabe lösen. Dort: Name und Avatar des Kindes, Zweisprachigkeit,
+Unten rechts auf „Eltern“, dann eine Malaufgabe lösen. Dort: Sprache der App, Name und Avatar des Kindes,
 Sprachausgabe, Stimmenwahl, Tagesziel (10–50 XP), optionales Tageslimit an Lektionen, Familien-Liga-Mitglieder,
 XP der letzten 7 Tage mit „Woran üben“, Fortschrittstabelle pro Spiel, Berliner Schulerwartungen, Zurücksetzen.
 

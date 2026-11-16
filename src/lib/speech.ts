@@ -1,5 +1,6 @@
 // Browser text-to-speech. Works offline on iOS/macOS/Android with system voices.
-export type Lang = 'de' | 'it'
+import { getLang, type Lang } from './i18n'
+export type { Lang }
 
 const LANG_TAG: Record<Lang, string> = { de: 'de-DE', it: 'it-IT' }
 
@@ -94,13 +95,11 @@ export function stopSpeech() {
 }
 
 /** Resolves true when the phrase was spoken to the end, false when it was cancelled or skipped. */
-export function speak(text: string, lang: Lang = 'de', opts: { rate?: number; interrupt?: boolean } = {}): Promise<boolean> {
+export function speak(text: string, lang: Lang = getLang(), opts: { rate?: number; interrupt?: boolean } = {}): Promise<boolean> {
   if (opts.interrupt !== false) stopSpeech()
   const myGen = generation
   return new Promise((resolve) => {
     if (!enabled || typeof speechSynthesis === 'undefined' || !text) return resolve(false)
-    // No Italian voice on this device → a German voice would read Italian badly. Skip.
-    if (lang !== 'de' && allVoices().length > 0 && !hasVoice(lang)) return resolve(false)
     const u = new SpeechSynthesisUtterance(text)
     u.lang = LANG_TAG[lang]
     const v = pickVoice(lang)
@@ -125,30 +124,26 @@ export function speak(text: string, lang: Lang = 'de', opts: { rate?: number; in
   })
 }
 
-/** Speak German, then Italian if bilingual mode is on. Resolves false if cancelled. */
-export async function speakBoth(de: string, it: string | undefined, bilingual: boolean): Promise<boolean> {
-  const myGen = generation + 1
-  const ok = await speak(de, 'de')
-  if (!ok && generation !== myGen) return false
-  if (bilingual && it) {
-    await new Promise((r) => setTimeout(r, 250))
-    if (generation !== myGen) return false
-    return speak(it, 'it', { interrupt: false })
-  }
-  return ok
+const PRAISE = {
+  de: ['Super!', 'Toll gemacht!', 'Richtig!', 'Klasse!', 'Prima!', 'Genau!', 'Wunderbar!', 'Spitze!'],
+  it: ['Bravo!', 'Perfetto!', 'Giusto!', 'Benissimo!', 'Ottimo!', 'Esatto!', 'Fantastico!', 'Grande!'],
 }
+const COMBO: Record<Lang, Record<number, string>> = {
+  de: { 3: 'Drei richtig in Folge!', 5: 'Wahnsinn! Fünf in Folge!', 8: 'Unglaublich! Acht in Folge!' },
+  it: { 3: 'Tre giuste di fila!', 5: 'Incredibile! Cinque di fila!', 8: 'Fantastico! Otto di fila!' },
+}
+const RETRY = {
+  de: ['Fast! Versuch es nochmal.', 'Nicht ganz. Probier es noch einmal.', 'Hmm, schau nochmal genau hin.'],
+  it: ['Quasi! Riprova.', 'Non proprio. Prova ancora.', 'Mmm, guarda bene.'],
+}
+const any = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)]
 
-const praiseDe = ['Super!', 'Toll gemacht!', 'Richtig!', 'Klasse!', 'Prima!', 'Genau!', 'Wunderbar!', 'Spitze!']
-const praiseIt = ['Bravo!', 'Perfetto!', 'Giusto!', 'Benissimo!', 'Ottimo!']
-const comboDe: Record<number, string> = { 3: 'Drei richtig in Folge!', 5: 'Wahnsinn! Fünf in Folge!', 8: 'Unglaublich! Acht in Folge!' }
-const retryDe = ['Fast! Versuch es nochmal.', 'Nicht ganz. Probier es noch einmal.', 'Hmm, schau nochmal genau hin.']
-
-export function praise(bilingual: boolean, combo = 0) {
-  const de = comboDe[combo] ?? praiseDe[Math.floor(Math.random() * praiseDe.length)]
-  const it = praiseIt[Math.floor(Math.random() * praiseIt.length)]
-  return { de, it, say: () => speakBoth(de, it, bilingual) }
+export function praise(combo = 0) {
+  const lang = getLang()
+  const text = COMBO[lang][combo] ?? any(PRAISE[lang])
+  return { text, say: () => speak(text) }
 }
 export function retry() {
-  const de = retryDe[Math.floor(Math.random() * retryDe.length)]
-  return { de, say: () => speak(de, 'de') }
+  const text = any(RETRY[getLang()])
+  return { text, say: () => speak(text) }
 }

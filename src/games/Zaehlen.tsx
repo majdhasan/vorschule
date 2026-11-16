@@ -3,6 +3,7 @@ import { Emojis, MiniDots } from '../components/Emojis'
 import { NUMBER_WORDS_DE, NUMBER_WORDS_IT } from '../data/misc'
 import { WORDS } from '../data/words'
 import { pick, randInt, shuffle } from '../lib/util'
+import { t, tr } from '../lib/i18n'
 import type { Builder } from './types'
 
 
@@ -14,8 +15,7 @@ export const build: Builder = (level, { focus, count = 6 }) => {
     const set = new Set([n])
     while (set.size < nOpts) set.add(Math.max(min, Math.min(max, n + randInt(-3, 3))))
     return {
-      promptDe: 'Wie viele sind das? Zähle!',
-      promptIt: 'Quanti sono? Conta!',
+      prompt: t('Wie viele sind das? Zähle!', 'Quanti sono? Conta!'),
       item: String(n),
       visual: <Emojis emoji={w.emoji} n={n} size={n > 10 ? 34 : 44} />,
       options: shuffle([...set]).map((o) => ({
@@ -26,8 +26,7 @@ export const build: Builder = (level, { focus, count = 6 }) => {
             {level < 3 && <MiniDots n={o} />}
           </span>
         ),
-        sayDe: NUMBER_WORDS_DE[o],
-        sayIt: NUMBER_WORDS_IT[o],
+        say: tr({ de: NUMBER_WORDS_DE, it: NUMBER_WORDS_IT })[o],
       })),
       answer: String(n),
       columns: nOpts === 4 ? 2 : 3,

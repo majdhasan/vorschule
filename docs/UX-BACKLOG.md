@@ -74,7 +74,7 @@ Effort: **S** under an hour, **M** a few hours, **L** a day or more.
 | 3.10 | P2 | M | On tall phones and iPad half the lesson screen is empty. | Flex column, `space-evenly`, options and emoji scale with `vh`. `styles.css:137,169` |
 | 3.11 | P2 | S | Quest card plus header leave one path node above the fold on iPhone SE. | Collapse to a "🎯 0/3" chip that opens the list. `Path.tsx`, `styles.css:68` |
 | 3.12 | P2 | S | Muster strip wraps so ❓ falls onto a second line. | `nowrap`, size items from width/count. `styles.css:208`, `Muster.tsx` |
-| 3.13 | P2 | S | 6-option rounds overflow 667 px screens behind the fixed footer. | Max 4 options, or smaller `.opt` when more than 4. `Buchstaben.tsx`, `Italienisch.tsx` |
+| 3.13 | P2 | S | 6-option rounds overflow 667 px screens behind the fixed footer. | Max 4 options, or smaller `.opt` when more than 4. `Buchstaben.tsx` |
 | 3.14 | P2 | S | Nachspuren footer buttons wrap and clip on SE; reset button label wraps out of its 50 px height. | `nowrap`, icon-only under 400 px, shorter labels. `styles.css:25,220` |
 | 3.15 | P2 | S | Parents progress table unreadable at 375 px. | Hide skill and date columns under 480 px. `styles.css:286` |
 | 3.16 | P2 | S | Opened chest shows 📭 (mailbox). | Done chest with ✓ badge. `Path.tsx:84` |

@@ -3,6 +3,7 @@ import { ACHIEVEMENTS, MEDALS } from '../data/achievements'
 import { todaysQuests, useStore, type LessonResult } from '../lib/store'
 import { speak } from '../lib/speech'
 import { todayKey } from '../lib/util'
+import { t } from '../lib/i18n'
 import { useTapGuard } from '../hooks/useTapGuard'
 import { QuestList } from './Quests'
 import { ChestReveal, RewardList } from './RewardReveal'
@@ -18,25 +19,24 @@ export function RewardsScreen({ result, onNext }: { result: LessonResult; onNext
   const guard = useTapGuard(chest, 500)
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      if (claimable) speak('Alle Tagesaufgaben geschafft! Hol dir deine Belohnung!', 'de')
-      else if (result.newStickers.length) speak('Du hast einen neuen Sticker!', 'de')
-      else if (result.newMedals.length) speak('Du hast eine neue Medaille!', 'de')
+    const tm = setTimeout(() => {
+      if (claimable) speak(t('Alle Tagesaufgaben geschafft! Hol dir deine Belohnung!', 'Missioni di oggi completate! Prendi il tuo premio!'))
+      else if (result.newStickers.length) speak(t('Du hast einen neuen Sticker!', 'Hai un nuovo adesivo!'))
+      else if (result.newMedals.length) speak(t('Du hast eine neue Medaille!', 'Hai una nuova medaglia!'))
       else {
         const open = quests.find((q) => !q.done)
-        if (open) speak(open.q.left(open.q.target - open.v), 'de')
+        if (open) speak(open.q.left(open.q.target - open.v))
       }
     }, 600)
-    return () => clearTimeout(t)
+    return () => clearTimeout(tm)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (chest) return <ChestReveal title="Tagesaufgaben geschafft!" open={() => s.claimQuests() ?? EMPTY} onDone={onNext} />
+  if (chest) return <ChestReveal title={t('Tagesaufgaben geschafft!', 'Missioni completate!')} open={() => s.claimQuests() ?? EMPTY} onDone={onNext} />
 
   return (
     <div className="end">
       <div className="end-top">
-        <h1 className="end-title">🎯 Tagesaufgaben</h1>
-        {s.bilingual && <div className="end-sub">Missioni di oggi</div>}
+        <h1 className="end-title">🎯 {t('Tagesaufgaben', 'Missioni di oggi')}</h1>
       </div>
       <QuestList animate big />
       {(result.newStickers.length > 0 || result.setsCompleted.length > 0) && <RewardList reward={{ ...EMPTY, stickers: result.newStickers, setsCompleted: result.setsCompleted }} />}
@@ -46,7 +46,7 @@ export function RewardsScreen({ result, onNext }: { result: LessonResult; onNext
           <div key={m.id + m.tier} className="medal-new">
             <span className="medal-new-emoji">{MEDALS[m.tier]}</span>
             <span>
-              Neue Medaille: <b>{a.emoji} {a.de}</b>
+              {t('Neue Medaille:', 'Nuova medaglia:')} <b>{a.emoji} {t(a.de, a.it)}</b>
             </span>
           </div>
         )
@@ -54,11 +54,11 @@ export function RewardsScreen({ result, onNext }: { result: LessonResult; onNext
       <footer className="lesson-foot">
         {claimable ? (
           <button className="btn yellow block pulse" onClick={guard(() => setChest(true))}>
-            🎁 Belohnung holen
+            🎁 {t('Belohnung holen', 'Prendi il premio')}
           </button>
         ) : (
           <button className="btn green block" onClick={guard(onNext)}>
-            Weiter ➜
+            {t('Weiter', 'Avanti')} ➜
           </button>
         )}
       </footer>

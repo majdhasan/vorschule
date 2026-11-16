@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { readableDark } from '../lib/util'
+import { t } from '../lib/i18n'
 
 type Props = { open: boolean; onClose: () => void; children: ReactNode; color?: string; light?: boolean }
 
@@ -10,7 +11,7 @@ export function Sheet({ open, onClose, children, color, light }: Props) {
   return (
     <div className="sheet-overlay" onClick={onClose}>
       <div className={'sheet' + (light ? ' light' : '')} style={{ ['--sheet' as string]: bg } as React.CSSProperties} onClick={(e) => e.stopPropagation()} role="dialog">
-        <button className="sheet-close" onClick={onClose} aria-label="Schließen">
+        <button className="sheet-close" onClick={onClose} aria-label={t('Schließen', 'Chiudi')}>
           ✕
         </button>
         {children}

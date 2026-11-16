@@ -2,6 +2,7 @@ import type { Round } from '../components/ChoiceGame'
 import { WORDS } from '../data/words'
 import { pick, pickN, shuffle } from '../lib/util'
 import type { Builder } from './types'
+import { t } from '../lib/i18n'
 
 const PATTERNS: Record<number, string[]> = {
   1: ['ABAB', 'ABAB', 'AABB'],
@@ -22,8 +23,7 @@ export const build: Builder = (level, { count = 6 }) =>
     const opts = shuffle([...new Set([answer, ...symbols])]).slice(0, level === 3 ? 4 : 3)
     if (!opts.includes(answer)) opts[0] = answer
     return {
-      promptDe: 'Was kommt als Nächstes?',
-      promptIt: 'Cosa viene dopo?',
+      prompt: t('Was kommt als Nächstes?', 'Cosa viene dopo?'),
       visual: (
         <div className="pattern" style={{ ['--n' as string]: shown + 1 } as React.CSSProperties}>
           {seq.slice(0, shown).map((s, i) => (

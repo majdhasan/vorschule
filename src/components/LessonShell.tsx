@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { useStore } from '../lib/store'
 import { hasVoice, speak, stopSpeech } from '../lib/speech'
+import { getLang, t } from '../lib/i18n'
 import { Mascot } from './Mascot'
 import { Sheet } from './Sheet'
 
@@ -20,8 +21,8 @@ export function LessonShell({ progress, hearts, maxHearts = 3, onClose, children
   const [ask, setAsk] = useState(false)
   const [noVoice, setNoVoice] = useState(false)
   useEffect(() => {
-    const t = setTimeout(() => setNoVoice(typeof speechSynthesis === 'undefined' || !hasVoice('de')), 1500)
-    return () => clearTimeout(t)
+    const tm = setTimeout(() => setNoVoice(typeof speechSynthesis === 'undefined' || !hasVoice(getLang())), 1500)
+    return () => clearTimeout(tm)
   }, [])
   // leaving the lesson must silence anything still queued
   useEffect(() => () => stopSpeech(), [])
@@ -29,13 +30,13 @@ export function LessonShell({ progress, hearts, maxHearts = 3, onClose, children
   const requestClose = () => {
     if (progress <= 0) return onClose()
     setAsk(true)
-    speak('Willst du wirklich aufhören?', 'de')
+    speak(t('Willst du wirklich aufhören?', 'Vuoi davvero smettere?'))
   }
 
   return (
     <div className={'lesson ' + (className ?? '')}>
       <header className="lesson-head">
-        <button className="icon-btn close-btn" onClick={requestClose} aria-label="Lektion beenden">
+        <button className="icon-btn close-btn" onClick={requestClose} aria-label={t('Lektion beenden', 'Esci dalla lezione')}>
           ✕
         </button>
         <div className="pbar" role="progressbar" aria-valuenow={Math.round(progress * 100)}>
@@ -44,7 +45,7 @@ export function LessonShell({ progress, hearts, maxHearts = 3, onClose, children
           </div>
         </div>
         {hearts !== undefined && (
-          <div className="hearts" aria-label={`${hearts} Herzen`}>
+          <div className="hearts" aria-label={t(`${hearts} Herzen`, `${hearts} cuori`)}>
             {Array.from({ length: maxHearts }, (_, i) => (
               <span key={i} className={'heart' + (i < hearts ? '' : ' lost')}>
                 {i < hearts ? '❤️' : '🖤'}
@@ -55,7 +56,7 @@ export function LessonShell({ progress, hearts, maxHearts = 3, onClose, children
       </header>
       {(!sound || noVoice) && (
         <div className="mute-banner" role="status">
-          🔇 {!sound ? 'Ton ist aus – im Elternbereich einschalten' : 'Keine deutsche Stimme auf diesem Gerät gefunden'}
+          🔇 {!sound ? t('Ton ist aus – im Elternbereich einschalten', 'Audio spento – attivalo nell’area genitori') : t('Keine deutsche Stimme auf diesem Gerät gefunden', 'Nessuna voce italiana su questo dispositivo')}
         </div>
       )}
       <main className="lesson-body">{children}</main>
@@ -63,13 +64,13 @@ export function LessonShell({ progress, hearts, maxHearts = 3, onClose, children
       <Sheet open={ask} onClose={() => setAsk(false)} light>
         <div className="quit">
           <Mascot mood="sad" size={88} />
-          <h2>Wirklich aufhören?</h2>
-          <p className="muted">Dann ist diese Lektion weg.</p>
+          <h2>{t('Wirklich aufhören?', 'Vuoi smettere?')}</h2>
+          <p className="muted">{t('Dann ist diese Lektion weg.', 'Questa lezione andrà persa.')}</p>
           <button className="btn green block" onClick={() => { stopSpeech(); setAsk(false) }}>
-            ✅ Weiterlernen
+            ✅ {t('Weiterlernen', 'Continua')}
           </button>
           <button className="btn outline-red block" onClick={() => { stopSpeech(); onClose() }}>
-            ❌ Aufhören
+            ❌ {t('Aufhören', 'Smetti')}
           </button>
         </div>
       </Sheet>

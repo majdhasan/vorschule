@@ -3,37 +3,52 @@ import confetti from 'canvas-confetti'
 import type { GameProps } from '../components/ChoiceGame'
 import { Mascot } from '../components/Mascot'
 import { LessonShell } from '../components/LessonShell'
-import { praise, speak, speakBoth } from '../lib/speech'
+import { praise, speak } from '../lib/speech'
+import { getLang, IT_LETTER, t } from '../lib/i18n'
 import { sfx } from '../lib/sfx'
 import { pickN, shuffle } from '../lib/util'
 import { drawDemo, drawGuide as drawStrokeGuide, drawHints, strokeCoverage, strokesFor } from './tracing'
 
 const L1 = 'AOMILET'.split('')
-const L2 = 'BCDFGHKNPRSUWZ12345'.split('')
-const L3 = 'abdeghmnrstuw67890'.split('')
+// Italian mode: only letters of the Italian alphabet (no K, W, umlauts)
+const L2 = { de: 'BCDFGHKNPRSUWZ12345', it: 'BCDFGHNPRSUVZ12345' }
+const L3 = { de: 'abdeghmnrstuw67890', it: 'abdeghmnrstu67890' }
 
-const NUM = ['', 'eins', 'zwei', 'drei', 'vier', 'fünf']
+const NUM = { de: ['', 'eins', 'zwei', 'drei', 'vier', 'fünf'], it: ['', 'uno', 'due', 'tre', 'quattro', 'cinque'] }
+const num = (n: number) => NUM[getLang()][n] ?? String(n)
 
+/** What Berli says (and shows) for a glyph. `say` spells Italian letters out ("emme"). */
 function sayFor(ch: string) {
   const n = strokesFor(ch)?.filter((x) => !x.dot).length ?? 1
-  const order = n > 1 ? ` Fang bei der Eins an.` : ''
-  if (/\d/.test(ch)) return { de: `Fahre die Zahl ${ch} nach.${order}`, it: `Ripassa il numero ${ch}.` }
-  if (ch === ch.toLowerCase()) return { de: `Fahre das kleine ${ch.toUpperCase()} nach.${order}`, it: `Ripassa la ${ch} piccola.` }
-  return { de: `Fahre das große ${ch} nach.${order}`, it: `Ripassa la ${ch} grande.` }
+  const digit = /\d/.test(ch)
+  const lower = !digit && ch === ch.toLowerCase()
+  if (getLang() === 'it') {
+    const order = n > 1 ? " Comincia dall'uno." : ''
+    if (digit) return { text: `Ripassa il numero ${ch}.${order}`, say: `Ripassa il numero ${ch}.${order}` }
+    const name = IT_LETTER[ch.toUpperCase()] ?? ch
+    const kind = lower ? 'minuscola' : 'maiuscola'
+    return { text: `Ripassa la ${ch} ${kind}.${order}`, say: `Ripassa la ${name} ${kind}.${order}` }
+  }
+  const order = n > 1 ? ' Fang bei der Eins an.' : ''
+  const text = digit ? `Fahre die Zahl ${ch} nach.${order}` : lower ? `Fahre das kleine ${ch.toUpperCase()} nach.${order}` : `Fahre das große ${ch} nach.${order}`
+  return { text, say: text }
 }
 
 /** Spoken while the demo draws: "Erst eins, dann zwei, dann drei." */
 function orderPhrase(n: number) {
-  if (n <= 1) return 'Schau mal, so geht das.'
-  return 'Schau mal: ' + Array.from({ length: n }, (_, i) => `${i === 0 ? 'erst' : 'dann'} ${NUM[i + 1] ?? i + 1}`).join(', ') + '.'
+  if (n <= 1) return t('Schau mal, so geht das.', 'Guarda, si fa così.')
+  const [first, then] = getLang() === 'it' ? ['prima', 'poi'] : ['erst', 'dann']
+  return t('Schau mal: ', 'Guarda: ') + Array.from({ length: n }, (_, i) => `${i === 0 ? first : then} ${num(i + 1)}`).join(', ') + '.'
 }
 
-export default function Nachspuren({ level, bilingual, childName, onFinish, onClose }: GameProps) {
+export default function Nachspuren({ level, childName, onFinish, onClose }: GameProps) {
   const targets = useMemo(() => {
-    const name = Array.from(new Set(childName.toUpperCase().replace(/[^A-ZÄÖÜ]/g, '').split(''))).slice(0, 3)
+    const lang = getLang()
+    const ok = lang === 'it' ? /[^A-IL-VZ]/g : /[^A-ZÄÖÜ]/g
+    const name = Array.from(new Set(childName.toUpperCase().replace(ok, '').split(''))).slice(0, 3)
     if (level === 1) return shuffle([...name, ...pickN(L1, 5 - name.length, (x) => name.includes(x))])
-    if (level === 2) return pickN(L2, 5)
-    return pickN(L3, 5)
+    if (level === 2) return pickN(L2[lang].split(''), 5)
+    return pickN(L3[lang].split(''), 5)
   }, [level]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [idx, setIdx] = useState(0)
@@ -91,7 +106,7 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
     cancelAnimationFrame(demoFrame.current)
     const n = strokes.length
     const real = strokes.filter((x) => !x.dot).length
-    if (withVoice) speak(orderPhrase(real), 'de')
+    if (withVoice) speak(orderPhrase(real))
     const perStroke = 900
     const t0 = performance.now()
     const hc = h.getContext('2d')!
@@ -114,12 +129,12 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
     setSolved(false)
     setFailed(0)
     const s = sayFor(ch)
-    const t = setTimeout(() => speakBoth(s.de, s.it, bilingual), 300)
+    const tm = setTimeout(() => speak(s.say), 300)
     // show how it's written once per letter, quietly, while Berli talks
     const d = setTimeout(() => demo(false), 700)
     document.fonts?.ready.then(() => alive.current && drawGuide())
     return () => {
-      clearTimeout(t)
+      clearTimeout(tm)
       clearTimeout(d)
       cancelAnimationFrame(demoFrame.current)
       clearTimeout(demoFrame.current)
@@ -198,8 +213,8 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
       setSolved(true)
       sfx.correct()
       confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 }, disableForReducedMotion: true })
-      const p = praise(bilingual)
-      setMsg(p.de)
+      const p = praise()
+      setMsg(p.text)
       const newGood = good + (failed === 0 ? 1 : 0)
       setGood(newGood)
       await p.say()
@@ -208,23 +223,23 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
     }
     if (silent) return
     if (drawn === 0) {
-      const m = 'Male mit dem Finger über den grauen Buchstaben! Fang bei der grünen Eins an.'
+      const m = t('Male mit dem Finger über den grauen Buchstaben! Fang bei der grünen Eins an.', "Passa il dito sulla lettera grigia! Comincia dall'uno verde.")
       setMsg(m)
-      speak(m, 'de')
+      speak(m)
       return
     }
     setFailed((a) => a + 1)
     const numbered = strokes ? strokes.slice(0, missing + 1).filter((x) => !x.dot).length : 0
     const m =
       outsideRatio >= 0.55
-        ? 'Bleib auf dem grauen Buchstaben!'
+        ? t('Bleib auf dem grauen Buchstaben!', 'Resta sulla lettera grigia!')
         : strokes && missing >= 0
           ? strokes[missing].dot
-            ? 'Vergiss die Pünktchen nicht!'
-            : `Fast! Vergiss die ${NUM[numbered] ?? numbered} nicht!`
-          : 'Fahre den ganzen Buchstaben nach!'
+            ? t('Vergiss die Pünktchen nicht!', 'Non dimenticare i puntini!')
+            : t(`Fast! Vergiss die ${num(numbered)} nicht!`, `Quasi! Non dimenticare il ${num(numbered)}!`)
+          : t('Fahre den ganzen Buchstaben nach!', 'Ripassa tutta la lettera!')
     setMsg(m)
-    speak(m, 'de')
+    speak(m)
   }
 
   const skip = () => {
@@ -234,10 +249,10 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
 
   const footer = (
     <div className="trace-actions">
-      <button className="btn white icon" onClick={clear} aria-label="Löschen">🧽</button>
-      {strokes && <button className="btn white icon" onClick={() => demo(true)} aria-label="Zeig mir wie">👀</button>}
-      <button className="btn white icon" onClick={skip} aria-label="Überspringen">⏭️</button>
-      <button className="btn green grow" onClick={() => evaluate(false)}>✓ Fertig</button>
+      <button className="btn white icon" onClick={clear} aria-label={t('Löschen', 'Cancella')}>🧽</button>
+      {strokes && <button className="btn white icon" onClick={() => demo(true)} aria-label={t('Zeig mir wie', 'Fammi vedere')}>👀</button>}
+      <button className="btn white icon" onClick={skip} aria-label={t('Überspringen', 'Salta')}>⏭️</button>
+      <button className="btn green grow" onClick={() => evaluate(false)}>✓ {t('Fertig', 'Fatto')}</button>
     </div>
   )
 
@@ -246,9 +261,8 @@ export default function Nachspuren({ level, bilingual, childName, onFinish, onCl
       <div className="q">
         <div className="q-head">
           <Mascot mood={solved ? 'happy' : 'normal'} size={56} />
-          <button className="bubble" onClick={() => { const s = sayFor(ch); speakBoth(s.de, s.it, bilingual) }}>
-            <div className="bubble-de">{msg ?? sayFor(ch).de}</div>
-            {bilingual && !msg && <div className="bubble-it">{sayFor(ch).it}</div>}
+          <button className="bubble" onClick={() => speak(sayFor(ch).say)}>
+            <div className="bubble-de">{msg ?? sayFor(ch).text}</div>
             <span className="bubble-speaker">🔊</span>
           </button>
         </div>

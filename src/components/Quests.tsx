@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { todaysQuests, useStore } from '../lib/store'
+import { t } from '../lib/i18n'
 
 /** Today's three quests with progress bars. */
 export function QuestList({ animate = false, big = false }: { animate?: boolean; big?: boolean }) {
@@ -8,8 +9,8 @@ export function QuestList({ animate = false, big = false }: { animate?: boolean;
   const [go, setGo] = useState(!animate)
   useEffect(() => {
     if (!animate) return
-    const t = setTimeout(() => setGo(true), 150)
-    return () => clearTimeout(t)
+    const tm = setTimeout(() => setGo(true), 150)
+    return () => clearTimeout(tm)
   }, [animate])
   return (
     <div className={'quests' + (big ? ' big' : '')}>
@@ -17,7 +18,7 @@ export function QuestList({ animate = false, big = false }: { animate?: boolean;
         <div key={q.id} className={'quest' + (done ? ' done' : '')}>
           <span className="quest-emoji">{q.emoji}</span>
           <div className="quest-main">
-            <div className="quest-title">{q.de}</div>
+            <div className="quest-title">{t(q.de, q.it)}</div>
             <div className="quest-bar">
               <div className="quest-fill" style={{ width: go ? `${(v / q.target) * 100}%` : '0%' }} />
               <span className="quest-num">
@@ -25,7 +26,7 @@ export function QuestList({ animate = false, big = false }: { animate?: boolean;
               </span>
             </div>
           </div>
-          <span className={'quest-check' + (done ? ' on' : '')} aria-label={done ? 'geschafft' : 'offen'} />
+          <span className={'quest-check' + (done ? ' on' : '')} aria-label={done ? t('geschafft', 'fatta') : t('offen', 'da fare')} />
         </div>
       ))}
     </div>

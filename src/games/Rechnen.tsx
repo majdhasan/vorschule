@@ -2,6 +2,7 @@ import type { Round } from '../components/ChoiceGame'
 import { Dots } from '../components/Emojis'
 import { NUMBER_WORDS_DE, NUMBER_WORDS_IT } from '../data/misc'
 import { randInt, shuffle, coin } from '../lib/util'
+import { t, tr } from '../lib/i18n'
 import type { Builder } from './types'
 
 
@@ -29,8 +30,7 @@ export const build: Builder = (level, { focus, count = 6 }) => {
     while (set.size < nOpts) set.add(Math.max(0, Math.min(MAX, res + randInt(-3, 3))))
     const op = minus ? '−' : '+'
     return {
-      promptDe: `Wie viel ist ${a} ${minus ? 'minus' : 'plus'} ${b}?`,
-      promptIt: `Quanto fa ${a} ${minus ? 'meno' : 'più'} ${b}?`,
+      prompt: t(`Wie viel ist ${a} ${minus ? 'minus' : 'plus'} ${b}?`, `Quanto fa ${a} ${minus ? 'meno' : 'più'} ${b}?`),
       item: `${a}${minus ? '-' : '+'}${b}`,
       visual: (
         <div className="math">
@@ -50,7 +50,7 @@ export const build: Builder = (level, { focus, count = 6 }) => {
           </div>
         </div>
       ),
-      options: shuffle([...set]).map((o) => ({ key: String(o), node: <span className="num-opt">{o}</span>, sayDe: NUMBER_WORDS_DE[o], sayIt: NUMBER_WORDS_IT[o] })),
+      options: shuffle([...set]).map((o) => ({ key: String(o), node: <span className="num-opt">{o}</span>, say: tr({ de: NUMBER_WORDS_DE, it: NUMBER_WORDS_IT })[o] })),
       answer: String(res),
       columns: nOpts === 4 ? 2 : 3,
     }

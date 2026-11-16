@@ -3,7 +3,8 @@ import { UNITS, type PathNode, type Unit } from '../data/path'
 import { THEMES } from '../data/misc'
 import { gameById } from '../games'
 import { capReached, nodePlayLevel, pathStatus, streakInfo, todaysQuests, useStore } from '../lib/store'
-import { speak, speakBoth } from '../lib/speech'
+import { speak } from '../lib/speech'
+import { t } from '../lib/i18n'
 import { readableDark, todayKey } from '../lib/util'
 import { Mascot } from '../components/Mascot'
 import { Sheet } from '../components/Sheet'
@@ -47,8 +48,8 @@ export function Path({ onLesson }: Props) {
     if (savedScroll !== null) {
       window.scrollTo(0, savedScroll)
       savedScroll = null
-      const t = setTimeout(() => scrollToCurrent(true), 350)
-      return () => clearTimeout(t)
+      const tm = setTimeout(() => scrollToCurrent(true), 350)
+      return () => clearTimeout(tm)
     }
     scrollToCurrent(false)
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
@@ -68,20 +69,20 @@ export function Path({ onLesson }: Props) {
 
   const openNode = (node: PathNode, unit: Unit, index: number) => {
     if (!status.isUnlocked(index)) {
-      speak('Schaffe zuerst die Lektionen davor!', 'de')
+      speak(t('Schaffe zuerst die Lektionen davor!', 'Prima completa le lezioni precedenti!'))
       setSel({ node, unit, index })
       return
     }
     if (node.kind === 'chest') {
-      if (status.isDone(node.id)) return void speak('Diese Truhe hast du schon geöffnet.', 'de')
-      if (s.activeMember) return void speak('Die Truhe darf nur das Kind öffnen.', 'de')
+      if (status.isDone(node.id)) return void speak(t('Diese Truhe hast du schon geöffnet.', 'Hai già aperto questo forziere.'))
+      if (s.activeMember) return void speak(t('Die Truhe darf nur das Kind öffnen.', 'Solo il bambino può aprire il forziere.'))
       setChest(node.id)
       return
     }
-    if (node.kind === 'review') speak('Die Prüfung! Alle Spiele dieser Einheit gemischt.', 'de')
+    if (node.kind === 'review') speak(t('Die Prüfung! Alle Spiele dieser Einheit gemischt.', 'La verifica! Tutti i giochi di questa unità mescolati.'))
     else {
       const g = gameById(node.game)
-      speakBoth(g.title, g.titleIt, s.bilingual)
+      speak(t(g.title, g.titleIt))
     }
     setSel({ node, unit, index })
   }
@@ -101,13 +102,13 @@ export function Path({ onLesson }: Props) {
     <div className={'path theme-' + (theme.id || 'standard')}>
       <header className="topbar-stats">
         <div className="topbar-inner">
-          <button className={'tstat' + (sk.doneToday ? '' : ' cold')} onClick={() => setSheet('streak')} aria-label={`Serie ${sk.streak} Tage`}>
+          <button className={'tstat' + (sk.doneToday ? '' : ' cold')} onClick={() => setSheet('streak')} aria-label={t(`Serie ${sk.streak} Tage`, `Serie di ${sk.streak} giorni`)}>
             🔥 {sk.streak}
           </button>
-          <button className="tstat" onClick={() => speak(`Du hast ${s.gems} Edelsteine. Im Laden kannst du damit Sachen kaufen.`, 'de')} aria-label={`${s.gems} Edelsteine`}>
+          <button className="tstat" onClick={() => speak(t(`Du hast ${s.gems} Edelsteine. Im Laden kannst du damit Sachen kaufen.`, `Hai ${s.gems} gemme. Nel negozio puoi comprarci delle cose.`))} aria-label={t(`${s.gems} Edelsteine`, `${s.gems} gemme`)}>
             💎 {s.gems}
           </button>
-          <button className="tstat goal" onClick={() => speak(goalPct >= 1 ? 'Tagesziel geschafft!' : `Noch ${s.dailyGoal - s.daily.xp} XP bis zum Tagesziel.`, 'de')} aria-label="Tagesziel">
+          <button className="tstat goal" onClick={() => speak(goalPct >= 1 ? t('Tagesziel geschafft!', 'Obiettivo del giorno raggiunto!') : t(`Noch ${s.dailyGoal - s.daily.xp} XP bis zum Tagesziel.`, `Ancora ${s.dailyGoal - s.daily.xp} XP all’obiettivo del giorno.`))} aria-label={t('Tagesziel', 'Obiettivo del giorno')}>
             <span className="goal-ring" style={{ ['--p' as string]: `${goalPct * 360}deg` } as React.CSSProperties}>
               <span>⚡</span>
             </span>
@@ -119,10 +120,10 @@ export function Path({ onLesson }: Props) {
       {member && (
         <div className="adult-banner">
           <span>
-            {member.avatar} {member.name} spielt gerade
+            {member.avatar} {member.name} {t('spielt gerade', 'sta giocando')}
           </span>
           <button className="btn small white" onClick={() => s.setActiveMember('')}>
-            Zurück zu {s.childName}
+            {t('Zurück zu', 'Torna a')} {s.childName}
           </button>
         </div>
       )}
@@ -131,26 +132,26 @@ export function Path({ onLesson }: Props) {
         <div className="cap-banner">
           <Mascot mood="sleep" size={56} />
           <div>
-            <b>Berli macht Pause – bis morgen!</b>
-            <div className="muted">Heute hast du schon {s.daily.lessons} Lektionen geschafft. Toll!</div>
+            <b>{t('Berli macht Pause – bis morgen!', 'Berli fa una pausa – a domani!')}</b>
+            <div className="muted">{t(`Heute hast du schon ${s.daily.lessons} Lektionen geschafft. Toll!`, `Oggi hai già fatto ${s.daily.lessons} lezioni. Bravo!`)}</div>
           </div>
         </div>
       )}
 
       <div className="chips-row">
-        <button className={'chip-card' + (claimable ? ' glow' : '')} onClick={() => { setSheet('quests'); speak(claimable ? 'Hol dir deine Belohnung!' : 'Deine Tagesaufgaben', 'de') }}>
+        <button className={'chip-card' + (claimable ? ' glow' : '')} onClick={() => { setSheet('quests'); speak(claimable ? t('Hol dir deine Belohnung!', 'Prendi il tuo premio!') : t('Deine Tagesaufgaben', 'Le tue missioni di oggi')) }}>
           <span className="chip-emoji">{claimable ? '🎁' : '🎯'}</span>
           <span className="chip-main">
-            <span className="chip-title">Aufgaben</span>
+            <span className="chip-title">{t('Aufgaben', 'Missioni')}</span>
             <span className="mini-bar"><span style={{ width: `${(questsDone / quests.length) * 100}%` }} /></span>
           </span>
           <span className="chip-num">{questsDone}/{quests.length}</span>
         </button>
-        <button className="chip-card" onClick={() => { setSheet('league'); speak(s.members.length ? `Familien-Liga: Du bist auf Platz ${myRank}.` : 'Familien-Liga', 'de') }}>
+        <button className="chip-card" onClick={() => { setSheet('league'); speak(s.members.length ? t(`Familien-Liga: Du bist auf Platz ${myRank}.`, `Lega di famiglia: sei al posto numero ${myRank}.`) : t('Familien-Liga', 'Lega di famiglia')) }}>
           <span className="chip-emoji">🏅</span>
           <span className="chip-main">
-            <span className="chip-title">Liga</span>
-            <span className="chip-sub">{s.members.length ? `Platz ${myRank}` : 'Familie'}</span>
+            <span className="chip-title">{t('Liga', 'Lega')}</span>
+            <span className="chip-sub">{s.members.length ? t(`Platz ${myRank}`, `${myRank}° posto`) : t('Familie', 'Famiglia')}</span>
           </span>
         </button>
       </div>
@@ -166,7 +167,8 @@ export function Path({ onLesson }: Props) {
           const prog = s.nodes[node.id]
           const crowns = prog?.crowns ?? 0
           const legendary = crowns >= 3
-          const label = node.kind === 'chest' ? 'Truhe' : node.kind === 'review' ? 'Prüfung' : gameById(node.game).title
+          const g = node.kind === 'lesson' ? gameById(node.game) : null
+          const label = node.kind === 'chest' ? t('Truhe', 'Forziere') : node.kind === 'review' ? t('Prüfung', 'Verifica') : t(g!.title, g!.titleIt)
           const icon = node.kind === 'chest' ? '🎁' : node.kind === 'review' ? '🏆' : gameById(node.game).emoji
           const deco = theme.deco.length && Math.abs(offset) >= 46 ? theme.deco[(index * 3) % theme.deco.length] : null
           const els = [
@@ -178,7 +180,7 @@ export function Path({ onLesson }: Props) {
             >
               {current && (
                 <div className="start-bubble" style={{ color: readableDark(unit.color, 4.5) }}>
-                  {capped ? '💤' : node.kind === 'chest' ? 'ÖFFNEN' : 'START'}
+                  {capped ? '💤' : node.kind === 'chest' ? t('ÖFFNEN', 'APRI') : t('START', 'VIA')}
                 </div>
               )}
               <button
@@ -187,7 +189,7 @@ export function Path({ onLesson }: Props) {
                 }
                 style={unlocked ? ({ ['--c' as string]: unit.color, ['--d' as string]: unit.dark } as React.CSSProperties) : undefined}
                 onClick={() => openNode(node, unit, index)}
-                aria-label={`${label}${done ? ', geschafft' : unlocked ? '' : ', gesperrt'}`}
+                aria-label={`${label}${done ? t(', geschafft', ', fatto') : unlocked ? '' : t(', gesperrt', ', bloccato')}`}
               >
                 {done && node.kind !== 'chest' && <span className="node-ring" style={{ background: `conic-gradient(#FFC800 ${((prog?.stars ?? 0) / 3) * 360}deg, #E5E5E5 0)` }} />}
                 <span className="node-icon">{icon}</span>
@@ -223,15 +225,14 @@ export function Path({ onLesson }: Props) {
             <div className="unit-head" style={{ background: unitLocked ? '#AFAFAF' : unit.color, boxShadow: `0 4px 0 ${unitLocked ? '#8a8a8a' : unit.dark}` }}>
               <div className="unit-text">
                 <div className="unit-kicker">
-                  Einheit {ui + 1} · {unitDoneCount}/{unit.nodes.length}
+                  {t('Einheit', 'Unità')} {ui + 1} · {unitDoneCount}/{unit.nodes.length}
                   {unitDoneCount === unit.nodes.length ? ' ✓' : ''}
                 </div>
-                <div className="unit-title">{unit.title}</div>
-                {s.bilingual && <div className="unit-it">{unit.titleIt}</div>}
+                <div className="unit-title">{t(unit.title, unit.titleIt)}</div>
               </div>
               {isCurrentUnit && !capped ? (
                 <button className="unit-go" onClick={continueUnit} style={{ color: readableDark(unit.color, 4.5) }}>
-                  Weiter ➜
+                  {t('Weiter', 'Avanti')} ➜
                 </button>
               ) : (
                 <span className="unit-emoji">{unit.emoji}</span>
@@ -244,11 +245,11 @@ export function Path({ onLesson }: Props) {
 
       <div className="path-end">
         <Mascot mood="happy" size={80} />
-        <p>Mehr Lektionen kommen bald!</p>
+        <p>{t('Mehr Lektionen kommen bald!', 'Presto arriveranno altre lezioni!')}</p>
       </div>
 
       {jump && (
-        <button className={'jump-btn ' + jump} onClick={() => scrollToCurrent(true)} aria-label="Zur aktuellen Lektion">
+        <button className={'jump-btn ' + jump} onClick={() => scrollToCurrent(true)} aria-label={t('Zur aktuellen Lektion', 'Vai alla lezione attuale')}>
           {jump === 'up' ? '⬆' : '⬇'}
         </button>
       )}
@@ -256,32 +257,32 @@ export function Path({ onLesson }: Props) {
       <NodeSheet sel={sel} status={status} capped={capped} onClose={() => setSel(null)} onStart={(l) => { setSel(null); start(l) }} />
 
       <Sheet open={sheet === 'quests'} onClose={() => setSheet(null)} light>
-        <h2 className="sheet-h">🎯 Tagesaufgaben</h2>
+        <h2 className="sheet-h">🎯 {t('Tagesaufgaben', 'Missioni di oggi')}</h2>
         <QuestList />
         {claimable ? (
           <button className="btn yellow block pulse" onClick={() => setSheet('claim')}>
-            🎁 Belohnung holen
+            🎁 {t('Belohnung holen', 'Prendi il premio')}
           </button>
         ) : (
-          <p className="muted small-print">Alle drei geschafft? Dann gibt es eine Truhe mit 💎 und einem Sticker!</p>
+          <p className="muted small-print">{t('Alle drei geschafft? Dann gibt es eine Truhe mit 💎 und einem Sticker!', 'Completate tutte e tre? Allora c’è un forziere con 💎 e un adesivo!')}</p>
         )}
       </Sheet>
 
       <Sheet open={sheet === 'league'} onClose={() => setSheet(null)} light>
-        <h2 className="sheet-h">🏅 Familien-Liga</h2>
-        <p className="muted small-print">Wer sammelt diese Woche die meisten XP? Jeden Montag geht es von vorne los.</p>
+        <h2 className="sheet-h">🏅 {t('Familien-Liga', 'Lega di famiglia')}</h2>
+        <p className="muted small-print">{t('Wer sammelt diese Woche die meisten XP? Jeden Montag geht es von vorne los.', 'Chi raccoglie più XP questa settimana? Ogni lunedì si ricomincia.')}</p>
         <ol className="league">
           {board.map((b, i) => (
             <li key={b.id || 'child'} className={b.id === '' ? 'me' : ''}>
               <span className="league-rank">{['🥇', '🥈', '🥉'][i] ?? i + 1}</span>
               <span className="league-avatar">{b.avatar}</span>
-              <span className="league-name">{b.name || 'Ich'}</span>
+              <span className="league-name">{b.name || t('Ich', 'Io')}</span>
               <span className="league-xp">{b.xp} XP</span>
             </li>
           ))}
         </ol>
-        {s.lastWeek && <p className="muted small-print">Letzte Woche: 🥇 {s.lastWeek.avatar} {s.lastWeek.name} mit {s.lastWeek.xp} XP</p>}
-        {!s.members.length && <p className="muted small-print">Mama, Papa & Co. können im Elternbereich mitspielen.</p>}
+        {s.lastWeek && <p className="muted small-print">{t('Letzte Woche:', 'Settimana scorsa:')} 🥇 {s.lastWeek.avatar} {s.lastWeek.name} {t('mit', 'con')} {s.lastWeek.xp} XP</p>}
+        {!s.members.length && <p className="muted small-print">{t('Mama, Papa & Co. können im Elternbereich mitspielen.', 'Mamma, papà & co. possono giocare dall’area genitori.')}</p>}
       </Sheet>
 
       {sheet === 'streak' && (
@@ -291,12 +292,12 @@ export function Path({ onLesson }: Props) {
       )}
       {sheet === 'claim' && (
         <div className="overlay-screen">
-          <ChestReveal title="Tagesaufgaben geschafft!" open={() => s.claimQuests() ?? EMPTY} onDone={() => setSheet(null)} />
+          <ChestReveal title={t('Tagesaufgaben geschafft!', 'Missioni completate!')} open={() => s.claimQuests() ?? EMPTY} onDone={() => setSheet(null)} />
         </div>
       )}
       {chest && (
         <div className="overlay-screen">
-          <ChestReveal title="Eine Schatztruhe!" open={() => s.openChest(chest)} onDone={() => setChest(null)} />
+          <ChestReveal title={t('Eine Schatztruhe!', 'Un forziere del tesoro!')} open={() => s.openChest(chest)} onDone={() => setChest(null)} />
         </div>
       )}
     </div>
@@ -313,9 +314,9 @@ function NodeSheet({ sel, status, capped, onClose, onStart }: { sel: Sel | null;
     return (
       <Sheet open onClose={onClose} color={color}>
         <div className="node-sheet">
-          <div className="node-sheet-title">🎁 Schatztruhe</div>
-          <div className="node-sheet-sub">Schaffe alle Lektionen und die Prüfung dieser Einheit, dann darfst du sie öffnen!</div>
-          <button className="btn locked block" disabled>🔒 Noch gesperrt</button>
+          <div className="node-sheet-title">🎁 {t('Schatztruhe', 'Forziere del tesoro')}</div>
+          <div className="node-sheet-sub">{t('Schaffe alle Lektionen und die Prüfung dieser Einheit, dann darfst du sie öffnen!', 'Completa tutte le lezioni e la verifica di questa unità, poi potrai aprirlo!')}</div>
+          <button className="btn locked block" disabled>🔒 {t('Noch gesperrt', 'Ancora bloccato')}</button>
         </div>
       </Sheet>
     )
@@ -324,34 +325,33 @@ function NodeSheet({ sel, status, capped, onClose, onStart }: { sel: Sel | null;
   const level = nodePlayLevel(node, prog)
   const crowns = prog?.crowns ?? 0
   const g = node.kind === 'lesson' ? gameById(node.game) : null
-  const title = g ? `${g.emoji} ${g.title}` : '🏆 Prüfung'
+  const title = g ? `${g.emoji} ${t(g.title, g.titleIt)}` : `🏆 ${t('Prüfung', 'Verifica')}`
   const action = !prog?.done
-    ? `${node.kind === 'review' ? 'Prüfung starten' : 'Start'} · +${node.kind === 'review' ? 15 : 10} XP`
+    ? `${node.kind === 'review' ? t('Prüfung starten', 'Inizia la verifica') : t('Start', 'Inizia')} · +${node.kind === 'review' ? 15 : 10} XP`
     : crowns < 3
-      ? `Krone ${crowns + 1} holen · +10 XP`
-      : 'Nochmal üben · +5 XP'
+      ? t(`Krone ${crowns + 1} holen · +10 XP`, `Conquista la corona ${crowns + 1} · +10 XP`)
+      : t('Nochmal üben · +5 XP', 'Ripassa · +5 XP')
   return (
     <Sheet open onClose={onClose} color={color}>
       <div className="node-sheet">
         <div className="node-sheet-title">
           {title} <span className="lvl">{'⭐'.repeat(level)}</span>
         </div>
-        {node.kind === 'review' && <div className="node-sheet-sub">Alle Spiele dieser Einheit gemischt. Schaffst du sie, geht die Truhe auf!</div>}
-        {s.bilingual && g && <div className="node-sheet-sub">{g.titleIt}</div>}
+        {node.kind === 'review' && <div className="node-sheet-sub">{t('Alle Spiele dieser Einheit gemischt. Schaffst du sie, geht die Truhe auf!', 'Tutti i giochi di questa unità mescolati. Se la superi, il forziere si apre!')}</div>}
         {prog?.done && (
-          <div className="crowns-row" aria-label={`${crowns} von 3 Kronen`}>
+          <div className="crowns-row" aria-label={t(`${crowns} von 3 Kronen`, `${crowns} corone su 3`)}>
             {[1, 2, 3].map((i) => (
               <span key={i} className={'crown' + (i <= crowns ? ' on' : '')}>
                 👑
               </span>
             ))}
-            {crowns >= 3 && <span className="legend-tag">🏅 Legendär</span>}
+            {crowns >= 3 && <span className="legend-tag">🏅 {t('Legendär', 'Leggendario')}</span>}
           </div>
         )}
         {!unlocked ? (
-          <button className="btn locked block" disabled>🔒 Noch gesperrt</button>
+          <button className="btn locked block" disabled>🔒 {t('Noch gesperrt', 'Ancora bloccato')}</button>
         ) : capped ? (
-          <button className="btn locked block" disabled>💤 Morgen geht's weiter</button>
+          <button className="btn locked block" disabled>💤 {t("Morgen geht's weiter", 'Si continua domani')}</button>
         ) : (
           <button
             className="btn white block big"
